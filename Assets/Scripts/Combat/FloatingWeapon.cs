@@ -21,7 +21,6 @@ public class FloatingWeapon : MonoBehaviour
     void Start()
     {
         trail = GetComponentInChildren<TrailRenderer>();
-        if (trail != null) trail.emitting = false;
     }
 
     void Update()
@@ -30,7 +29,6 @@ public class FloatingWeapon : MonoBehaviour
 
         if (currentState == WeaponState.Idle)
         {
-            if (trail != null) trail.emitting = false;
             
             // Hover behind player
             Vector3 targetPos = player.position + player.rotation * idleOffset;

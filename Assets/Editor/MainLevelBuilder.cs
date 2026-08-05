@@ -83,7 +83,7 @@ public class MainLevelBuilder : EditorWindow
         trail.time = 0.2f;
         trail.startWidth = 0.2f;
         trail.endWidth = 0.0f;
-        trail.emitting = false; // Only emit on swing
+        trail.emitting = true; // Always emit
         trail.sharedMaterial = trailMat;
 
         combat.swordPlaceholder = sword;
