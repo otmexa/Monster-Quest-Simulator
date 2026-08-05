@@ -24,10 +24,10 @@ public class PlayerCombat : MonoBehaviour
         Transform rangeCircle = transform.Find("PlayerRangeCircle");
         if (rangeCircle != null)
         {
-            LineRenderer lr = rangeCircle.GetComponent<LineRenderer>();
-            if (lr != null)
+            UnityEngine.Rendering.Universal.DecalProjector dp = rangeCircle.GetComponent<UnityEngine.Rendering.Universal.DecalProjector>();
+            if (dp != null)
             {
-                rangeMaterial = lr.material;
+                rangeMaterial = dp.material;
             }
         }
     }

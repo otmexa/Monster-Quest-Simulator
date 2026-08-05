@@ -37,19 +37,25 @@ public class MainLevelBuilder : EditorWindow
         GameObject pRangeCircle = new GameObject("PlayerRangeCircle");
         pRangeCircle.transform.SetParent(player.transform);
         pRangeCircle.transform.localPosition = new Vector3(0, -0.98f, 0);
-        pRangeCircle.transform.rotation = Quaternion.identity; 
+        pRangeCircle.transform.rotation = Quaternion.Euler(90, 0, 0); // Point downwards
         
-        LineRenderer pLr = pRangeCircle.AddComponent<LineRenderer>();
-        pLr.startWidth = 0.1f;
-        pLr.endWidth = 0.1f;
-        
-        Material pRangeMat = new Material(Shader.Find("Sprites/Default"));
-        pRangeMat.color = new Color(1, 1, 1, 0.3f);
-        pLr.sharedMaterial = pRangeMat;
-        
-        CircleRenderer pCr = pRangeCircle.AddComponent<CircleRenderer>();
-        pCr.radius = 8.0f; // matches 8.0f attack range
-        pCr.segments = 64;
+        UnityEngine.Rendering.Universal.DecalProjector pDp = pRangeCircle.AddComponent<UnityEngine.Rendering.Universal.DecalProjector>();
+        pDp.size = new Vector3(16f, 16f, 20f); // 16x16 is radius 8
+        pDp.material = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Resources/PlayerRangeDecal.mat");
+
+        // Also add the bumpy terrain!
+        for (int i = 0; i < 8; i++)
+        {
+            GameObject bump = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            bump.name = "TerrainBump";
+            bump.transform.position = new Vector3(Random.Range(-15f, 15f), 0, Random.Range(-15f, 15f));
+            bump.transform.localScale = new Vector3(Random.Range(4f, 10f), Random.Range(1f, 4f), Random.Range(4f, 10f));
+            bump.transform.SetParent(floor.transform);
+            
+            Renderer br = bump.GetComponent<Renderer>();
+            br.sharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            br.sharedMaterial.color = new Color(0.2f, 0.4f, 0.2f);
+        }
 
         // 3. WEAPON (CUBE)
         GameObject sword = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -78,7 +84,7 @@ public class MainLevelBuilder : EditorWindow
         trail.startWidth = 0.2f;
         trail.endWidth = 0.0f;
         trail.emitting = false; // Only emit on swing
-        trail.material = trailMat;
+        trail.sharedMaterial = trailMat;
 
         combat.swordPlaceholder = sword;
 
@@ -141,8 +147,8 @@ public class MainLevelBuilder : EditorWindow
         shape.shapeType = ParticleSystemShapeType.Circle;
         shape.radius = 2f;
         ParticleSystemRenderer psr = respawnObj.GetComponent<ParticleSystemRenderer>();
-        psr.material = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
-        psr.material.color = Color.yellow;
+        psr.sharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+        psr.sharedMaterial.color = Color.yellow;
         
         GameObject respawnPrefab = PrefabUtility.SaveAsPrefabAsset(respawnObj, "Assets/Prefabs/RespawnMagic.prefab");
         DestroyImmediate(respawnObj);
@@ -183,7 +189,7 @@ public class MainLevelBuilder : EditorWindow
             GameObject hbBg = new GameObject("HealthBarBG");
             hbBg.transform.SetParent(eCanvasObj.transform, false);
             Image bgImg = hbBg.AddComponent<Image>();
-            bgImg.sprite = Resources.GetBuiltinResource<Sprite>("UISprite.psd");
+            bgImg.sprite = UnityEditor.AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
             bgImg.type = Image.Type.Sliced;
             bgImg.color = new Color(0.1f, 0.1f, 0.1f, 1f); // Dark Grey background
             Outline bgOutline = hbBg.AddComponent<Outline>();
@@ -197,11 +203,9 @@ public class MainLevelBuilder : EditorWindow
             GameObject hbFill = new GameObject("HealthBarFill");
             hbFill.transform.SetParent(hbBg.transform, false);
             Image fillImg = hbFill.AddComponent<Image>();
-            fillImg.sprite = Resources.GetBuiltinResource<Sprite>("UISprite.psd");
+            fillImg.sprite = UnityEditor.AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+            fillImg.type = Image.Type.Sliced;
             fillImg.color = Color.green;
-            fillImg.type = Image.Type.Filled;
-            fillImg.fillMethod = Image.FillMethod.Horizontal;
-            fillImg.fillAmount = 1f;
             RectTransform fillRect = hbFill.GetComponent<RectTransform>();
             fillRect.anchorMin = Vector2.zero;
             fillRect.anchorMax = Vector2.one;

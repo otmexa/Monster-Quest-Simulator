@@ -1,52 +1,45 @@
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 public class TargetVisuals : MonoBehaviour
 {
-    [Header("Prefabs")]
-    public GameObject selectionCirclePrefab;
-    
     private GameObject primaryCircle;
     private GameObject queuedCircle;
+
+    private GameObject CreateCircle(Transform parent, Material decalMat, float size)
+    {
+        GameObject circleObj = new GameObject("TargetCircle");
+        circleObj.transform.SetParent(parent);
+        
+        Vector3 pos = parent.position;
+        pos.y = 0.5f; // Project from slightly above
+        circleObj.transform.position = pos;
+        circleObj.transform.rotation = Quaternion.Euler(90, 0, 0); // Point downwards
+
+        DecalProjector dp = circleObj.AddComponent<DecalProjector>();
+        dp.size = new Vector3(size, size, 5f);
+        dp.material = decalMat;
+        
+        return circleObj;
+    }
 
     public void SelectPrimaryTarget(Transform target)
     {
         ClearPrimaryTarget();
-        if (target != null && selectionCirclePrefab != null)
+        if (target != null)
         {
-            primaryCircle = Instantiate(selectionCirclePrefab, target);
-            Vector3 pos = target.position;
-            pos.y = 0.05f;
-            primaryCircle.transform.position = pos;
-            primaryCircle.transform.rotation = Quaternion.identity;
-            
-            LineRenderer lr = primaryCircle.GetComponent<LineRenderer>();
-            if (lr != null)
-            {
-                lr.material.color = Color.green;
-                lr.startWidth = 0.1f;
-                lr.endWidth = 0.1f;
-            }
+            Material greenMat = Resources.Load<Material>("TargetPrimaryDecal");
+            primaryCircle = CreateCircle(target, greenMat, 3f);
         }
     }
 
     public void SelectQueuedTarget(Transform target)
     {
         ClearQueuedTarget();
-        if (target != null && selectionCirclePrefab != null)
+        if (target != null)
         {
-            queuedCircle = Instantiate(selectionCirclePrefab, target);
-            Vector3 pos = target.position;
-            pos.y = 0.05f;
-            queuedCircle.transform.position = pos;
-            queuedCircle.transform.rotation = Quaternion.identity;
-            
-            LineRenderer lr = queuedCircle.GetComponent<LineRenderer>();
-            if (lr != null)
-            {
-                lr.material.color = new Color(1.0f, 0.5f, 0f); // Orange
-                lr.startWidth = 0.08f; // Slightly thinner for secondary
-                lr.endWidth = 0.08f;
-            }
+            Material orangeMat = Resources.Load<Material>("TargetQueuedDecal");
+            queuedCircle = CreateCircle(target, orangeMat, 2.5f);
         }
     }
 

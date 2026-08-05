@@ -21,12 +21,18 @@ public class Enemy : MonoBehaviour
     public Text healthText;
     public GameObject respawnParticlesPrefab;
     private Vector3 startPosition;
+    private Text hoverTextComp;
 
     void Start()
     {
-        startPosition = transform.position;
         currentHealth = maxHealth;
+        startPosition = transform.position;
         UpdateHealthBar();
+
+        if (hoverCanvas != null)
+        {
+            hoverTextComp = hoverCanvas.GetComponentInChildren<Text>();
+        }
 
         Renderer rend = GetComponent<Renderer>();
         if (rend != null)
@@ -54,7 +60,12 @@ public class Enemy : MonoBehaviour
         // 2. Hover Icon
         if (hoverCanvas != null)
         {
-            hoverCanvas.SetActive(isHovered && !isTargeted && currentHealth > 0);
+            bool shouldShow = isHovered && currentHealth > 0;
+            hoverCanvas.SetActive(shouldShow);
+            if (shouldShow && hoverTextComp != null)
+            {
+                hoverTextComp.text = isTargeted ? "RENDIRSE" : "Atacar";
+            }
         }
     }
 
@@ -117,7 +128,8 @@ public class Enemy : MonoBehaviour
         if (healthBarFill != null)
         {
             float percent = (float)currentHealth / maxHealth;
-            healthBarFill.fillAmount = percent;
+            RectTransform fillRect = healthBarFill.GetComponent<RectTransform>();
+            if (fillRect != null) fillRect.anchorMax = new Vector2(percent, 1f);
 
             if (percent > 0.5f)
                 healthBarFill.color = Color.green;
