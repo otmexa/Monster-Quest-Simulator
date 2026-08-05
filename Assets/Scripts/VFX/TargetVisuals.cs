@@ -12,12 +12,12 @@ public class TargetVisuals : MonoBehaviour
         circleObj.transform.SetParent(parent);
         
         Vector3 pos = parent.position;
-        pos.y = 0.5f; // Project from slightly above
+        pos.y = 0.1f; // Project from very close to the ground
         circleObj.transform.position = pos;
         circleObj.transform.rotation = Quaternion.Euler(90, 0, 0); // Point downwards
 
         DecalProjector dp = circleObj.AddComponent<DecalProjector>();
-        dp.size = new Vector3(size, size, 5f);
+        dp.size = new Vector3(size, size, 0.5f); // Shallow depth to not paint floating items
         dp.material = decalMat;
         
         return circleObj;

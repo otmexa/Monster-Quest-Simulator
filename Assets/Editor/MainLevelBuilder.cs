@@ -59,8 +59,9 @@ public class MainLevelBuilder : EditorWindow
 
         // 3. WEAPON (CUBE)
         GameObject sword = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        sword.name = "SwordPlaceholder";
-        // Do not parent to player so it can float freely in world space
+        sword.name = "Sword";
+        // Parent to player so PlayerCombat can find it. FloatingWeapon will detach it later.
+        sword.transform.SetParent(player.transform);
         sword.transform.position = new Vector3(0.6f, 1f, -1.5f);
         sword.transform.localScale = new Vector3(0.1f, 0.1f, 1.2f);
         sword.SetActive(false); // Hidden until selected
@@ -86,7 +87,7 @@ public class MainLevelBuilder : EditorWindow
         trail.emitting = true; // Always emit
         trail.sharedMaterial = trailMat;
 
-        combat.swordPlaceholder = sword;
+        // sword is now found automatically by PlayerCombat
 
         // 4. VISUAL EFFECTS PREFABS
         // 4a. Damage Number Prefab

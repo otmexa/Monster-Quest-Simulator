@@ -1,13 +1,20 @@
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem;
+using System.Collections.Generic;
 using Unity.Netcode;
 
 public class PlayerCombat : NetworkBehaviour
 {
     public float attackRange = 8.0f;
     public float attackSpeed = 2.0f;
-    public GameObject swordPlaceholder;
+    
+    // Lista de espadas equipadas (hasta 10 slots lógicos)
+    public List<FloatingWeapon> equippedWeapons = new List<FloatingWeapon>();
+    private Dictionary<string, FloatingWeapon> weaponMap = new Dictionary<string, FloatingWeapon>();
+    
+    // Referencia a la espada original para clonarla
+    private GameObject baseSwordPrefab;
     
     private Transform currentTarget;
     private Transform queuedTarget;
@@ -28,12 +35,86 @@ public class PlayerCombat : NetworkBehaviour
             rangeProjector = rangeCircle.GetComponent<UnityEngine.Rendering.Universal.DecalProjector>();
         }
         
-        if (swordPlaceholder == null)
+        // Guardamos el prefab original para clonarlo y lo ocultamos
+        Transform sword = transform.Find("Sword");
+        if (sword != null)
         {
-            Transform sword = transform.Find("Sword");
-            if (sword != null)
+            baseSwordPrefab = sword.gameObject;
+            baseSwordPrefab.SetActive(false); // Escondemos la base
+        }
+    }
+
+    public void EquipVisualWeapon(string id)
+    {
+        if (baseSwordPrefab == null) return;
+
+        GameObject newSword = Instantiate(baseSwordPrefab, transform.position, transform.rotation);
+        newSword.name = "Sword_" + id;
+        newSword.SetActive(true);
+        newSword.transform.SetParent(transform);
+
+        FloatingWeapon fw = newSword.GetComponent<FloatingWeapon>();
+        if (fw != null)
+        {
+            fw.player = transform;
+            equippedWeapons.Add(fw);
+            weaponMap[id] = fw;
+        }
+
+        RealignWeapons();
+    }
+
+    public void UnequipVisualWeapon(string id)
+    {
+        if (weaponMap.ContainsKey(id))
+        {
+            FloatingWeapon fw = weaponMap[id];
+            equippedWeapons.Remove(fw);
+            weaponMap.Remove(id);
+            if (fw != null) Destroy(fw.gameObject);
+
+            RealignWeapons();
+        }
+    }
+
+    private void RealignWeapons()
+    {
+        int count = equippedWeapons.Count;
+        for (int i = 0; i < count; i++)
+        {
+            FloatingWeapon fw = equippedWeapons[i];
+            
+            // Desincronizar su ángulo de órbita para que ataquen desde distintos flancos al enemigo
+            // orbitTime actúa como el ángulo en radianes en la función de órbita
+            fw.orbitTime = (Mathf.PI * 2f / count) * i;
+            
+            // Rotación fija para que apunten hacia la izquierda (Z = 90)
+            // Y = 90 gira la espada sobre su propio eje (la hoja) para que el filo quede vertical y no plana.
+            fw.idleRotationOffset = new Vector3(0f, 90f, 90f);
+
+            // Regresamos a negativo (-0.6f) que es la verdadera espalda.
+            float zBack = -0.6f; 
+            
+            // Apilarlas verticalmente dependiendo de cuántas haya
+            if (count == 1)
             {
-                swordPlaceholder = sword.gameObject;
+                fw.idleOffset = new Vector3(0f, 1.2f, zBack);
+            }
+            else if (count == 2)
+            {
+                float y = (i == 0) ? 1.4f : 1.0f;
+                fw.idleOffset = new Vector3(0f, y, zBack - (i * 0.1f)); 
+            }
+            else if (count == 3)
+            {
+                float y = (i == 0) ? 1.6f : (i == 1) ? 1.2f : 0.8f;
+                fw.idleOffset = new Vector3(0f, y, zBack - (i * 0.1f));
+            }
+            else
+            {
+                // Si equipa más de 3, las apilamos hacia arriba
+                float y = 1.2f + (i * 0.3f);
+                fw.idleOffset = new Vector3(0f, y, zBack - (i * 0.05f));
             }
         }
     }
@@ -185,10 +266,9 @@ UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), 10f * Time.deltaTime);
             }
 
-            if (swordPlaceholder != null)
+            foreach (var weapon in equippedWeapons)
             {
-                FloatingWeapon fw = swordPlaceholder.GetComponent<FloatingWeapon>();
-                if (fw != null) fw.Orbit(currentTarget);
+                if (weapon != null) weapon.Orbit(currentTarget);
             }
 
             if (Time.time >= lastAttackTime + attackSpeed)
@@ -217,19 +297,18 @@ UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
 
     void Attack()
     {
-        if (swordPlaceholder != null)
+        // Simple combo stagger: attack with all weapons
+        foreach (var weapon in equippedWeapons)
         {
-            FloatingWeapon fw = swordPlaceholder.GetComponent<FloatingWeapon>();
-            if (fw != null) fw.PerformStrike();
+            if (weapon != null) weapon.PerformStrike();
         }
     }
 
     void StopWeaponOrbit()
     {
-        if (swordPlaceholder != null)
+        foreach (var weapon in equippedWeapons)
         {
-            FloatingWeapon fw = swordPlaceholder.GetComponent<FloatingWeapon>();
-            if (fw != null) fw.StopAttack();
+            if (weapon != null) weapon.StopAttack();
         }
     }
 }

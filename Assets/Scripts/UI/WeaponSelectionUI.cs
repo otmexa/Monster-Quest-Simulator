@@ -56,9 +56,12 @@ public class WeaponSelectionUI : MonoBehaviour
         selectionPanel.SetActive(false);
         Time.timeScale = 1f;
 
-        if (playerCombat != null && playerCombat.swordPlaceholder != null)
+        if (playerCombat != null && playerCombat.equippedWeapons != null)
         {
-            playerCombat.swordPlaceholder.SetActive(true);
+            foreach (var w in playerCombat.equippedWeapons)
+            {
+                if (w != null) w.gameObject.SetActive(true);
+            }
         }
     }
 }

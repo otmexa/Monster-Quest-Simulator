@@ -5,6 +5,7 @@ public class FloatingWeapon : MonoBehaviour
 {
     public Transform player;
     public Vector3 idleOffset = new Vector3(0, 1.5f, -1.5f);
+    public Vector3 idleRotationOffset = new Vector3(0, 0, 90f); // Default to horizontal
     public float followSpeed = 5f;
     
     private TrailRenderer trail;
@@ -12,15 +13,28 @@ public class FloatingWeapon : MonoBehaviour
     
     private enum WeaponState { Idle, Orbit, Strike }
     private WeaponState currentState = WeaponState.Idle;
-
-    private float orbitTime = 0f;
-    private float orbitSpeed = 3f; 
-    private float orbitDistance = 2.5f;
+    private Transform target;
+    public float orbitTime = 0f;
     private float orbitTilt = 0f;
+    private float orbitDistance = 2f;
+    public float orbitSpeed = 5f;
 
     void Start()
     {
         trail = GetComponentInChildren<TrailRenderer>();
+        if (trail == null)
+        {
+            trail = gameObject.AddComponent<TrailRenderer>();
+            trail.time = 0.2f;
+            trail.startWidth = 0.1f;
+            trail.endWidth = 0f;
+            trail.emitting = false;
+        }
+
+        // Asegurarse de que no colisionen físicamente con el jugador ni entre ellas
+        Collider col = GetComponent<Collider>();
+        if (col != null) col.isTrigger = true;
+
         if (player == null && transform.parent != null)
         {
             player = transform.parent;
@@ -40,7 +54,9 @@ public class FloatingWeapon : MonoBehaviour
             Vector3 targetPos = player.position + player.rotation * idleOffset;
             targetPos.y = Mathf.Max(targetPos.y, 0.5f); // Prevent clipping into ground
             transform.position = Vector3.Lerp(transform.position, targetPos, followSpeed * Time.deltaTime);
-            transform.rotation = Quaternion.Slerp(transform.rotation, player.rotation, followSpeed * Time.deltaTime);
+            
+            Quaternion targetRot = player.rotation * Quaternion.Euler(idleRotationOffset);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, followSpeed * Time.deltaTime);
         }
         else if (currentState == WeaponState.Orbit)
         {
