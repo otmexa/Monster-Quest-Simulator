@@ -52,7 +52,7 @@ public class PlayerController : MonoBehaviour
 
         if (inputDir.magnitude > 0.1f)
         {
-            agent.ResetPath();
+            if (agent.isActiveAndEnabled && agent.isOnNavMesh) agent.ResetPath();
             
             // Move relative to camera yaw
             Vector3 camForward = mainCamera.transform.forward;
@@ -89,7 +89,7 @@ public class PlayerController : MonoBehaviour
                 if (hit.collider.GetComponent<Enemy>() != null)
                 {
                     // Target enemy, but don't move towards it
-                    agent.ResetPath();
+                    if (agent.isActiveAndEnabled && agent.isOnNavMesh) agent.ResetPath();
                     return;
                 }
 
