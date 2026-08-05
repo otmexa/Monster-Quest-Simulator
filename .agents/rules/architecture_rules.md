@@ -28,9 +28,9 @@ Este documento contiene los pilares de diseño que Antigravity DEBE respetar en 
 * **Regla:** El contenido repetitivo no se arma a mano, se genera.
 * **Práctica:** Crearemos una ventana de Editor personalizada en Unity (`EditorWindow`) donde el usuario pueda simplemente asignar el prefab base de la isla, la lista de monstruos, el boss, y las decoraciones. Al darle a "Generar", el script armará la isla automáticamente para poder producir miles de islas sin esfuerzo manual.
 
-## 6. Optimización y Chunking por Escenas 🚪
-* **Regla:** Mantener el rendimiento impecable agrupando islas.
-* **Práctica:** El desplazamiento entre islas SIEMPRE será a través de portales. Para evitar sobrecargar la memoria con props, después de un número determinado de islas en una misma escena, el portal del boss final cargará físicamente una NUEVA escena en Unity.
+## 6. Optimización por Chunking y Culling (Mundo Abierto Masivo) 🚪
+* **Regla:** Solo existe lo que el jugador puede ver o alcanzar.
+* **Práctica:** En lugar de crear muchas escenas separadas, podemos tener 100+ islas en una sola escena. Para mantener el rendimiento perfecto en móviles, implementaremos un sistema de **Distance Culling**. Solo las islas que estén dentro de un radio específico alrededor del jugador estarán activas (`SetActive(true)`). A medida que el jugador avance por los puentes o portales, las islas lejanas se apagarán automáticamente y las nuevas se encenderán, liberando memoria y procesamiento instantáneamente.
 
 ## 7. Economía de la Dopamina (Upgrades) 🧲
 * **Práctica:** La recolección magnética es nativa para generar dopamina, pero el **Rango de Magnetismo** será una estadística escalable (comprable/mejorable por el jugador) para dar sensación de poder y progresión.
