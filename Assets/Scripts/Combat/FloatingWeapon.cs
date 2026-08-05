@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class FloatingWeapon : MonoBehaviour
 {
@@ -6,77 +7,144 @@ public class FloatingWeapon : MonoBehaviour
     public Vector3 idleOffset = new Vector3(0, 1.5f, -1.5f);
     public float followSpeed = 5f;
     
-    private bool isAttacking = false;
-    private Transform attackTarget;
     private TrailRenderer trail;
+    private Transform currentTarget;
     
+    private enum WeaponState { Idle, Orbit, Strike }
+    private WeaponState currentState = WeaponState.Idle;
+
+    private float orbitTime = 0f;
+    private float orbitSpeed = 3f; 
+    private float orbitDistance = 2.5f;
+    private float orbitTilt = 0f;
+
     void Start()
     {
         trail = GetComponentInChildren<TrailRenderer>();
-        if (trail != null) trail.emitting = true; // ALWAYS ON
+        if (trail != null) trail.emitting = false;
     }
 
     void Update()
     {
         if (player == null) return;
 
-        if (!isAttacking)
+        if (currentState == WeaponState.Idle)
         {
+            if (trail != null) trail.emitting = false;
+            
             // Hover behind player
             Vector3 targetPos = player.position + player.rotation * idleOffset;
+            targetPos.y = Mathf.Max(targetPos.y, 0.5f); // Prevent clipping into ground
             transform.position = Vector3.Lerp(transform.position, targetPos, followSpeed * Time.deltaTime);
-            
-            // Look in the same direction as player
             transform.rotation = Quaternion.Slerp(transform.rotation, player.rotation, followSpeed * Time.deltaTime);
+        }
+        else if (currentState == WeaponState.Orbit)
+        {
+            if (trail != null) trail.emitting = true;
+
+            if (currentTarget != null)
+            {
+                // Trace "Atom" like 3D orbits
+                orbitTime += Time.deltaTime * orbitSpeed;
+                orbitTilt += Time.deltaTime * 15f; // Slowly tilt the orbital plane
+                
+                // Base flat circle
+                Vector3 flatOffset = new Vector3(Mathf.Cos(orbitTime), 0, Mathf.Sin(orbitTime)) * orbitDistance;
+                
+                // Tilt the circle
+                Quaternion orbitRotation = Quaternion.Euler(orbitTilt, orbitTilt * 0.5f, 0);
+                Vector3 offset = orbitRotation * flatOffset;
+                
+                Vector3 targetPos = currentTarget.position + Vector3.up * 1.2f + offset;
+                targetPos.y = Mathf.Max(targetPos.y, 0.5f); // Prevent clipping into ground
+
+                Vector3 moveDir = (targetPos - transform.position).normalized;
+                
+                transform.position = Vector3.Lerp(transform.position, targetPos, followSpeed * 2f * Time.deltaTime);
+                
+                // Point forward along the orbit path like a dart
+                if (moveDir.sqrMagnitude > 0.001f)
+                {
+                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDir), Time.deltaTime * 15f);
+                }
+            }
+            else
+            {
+                StopAttack();
+            }
         }
     }
 
-    public void Attack(Transform target)
+    public void Orbit(Transform target)
     {
-        if (!isAttacking && target != null)
+        if (currentState == WeaponState.Strike) return; // Don't interrupt strike
+        
+        currentTarget = target;
+        currentState = WeaponState.Orbit;
+    }
+
+    public void PerformStrike()
+    {
+        if (currentTarget != null && currentState != WeaponState.Strike)
         {
-            attackTarget = target;
-            StartCoroutine(AggressiveAttackRoutine());
+            StartCoroutine(StrikeRoutine());
         }
     }
 
     public void StopAttack()
     {
-        isAttacking = false;
-        attackTarget = null;
         StopAllCoroutines();
+        currentState = WeaponState.Idle;
+        currentTarget = null;
     }
 
-    System.Collections.IEnumerator AggressiveAttackRoutine()
+    IEnumerator StrikeRoutine()
     {
-        isAttacking = true;
-        
-        while (attackTarget != null && isAttacking)
+        currentState = WeaponState.Strike;
+        if (trail != null) trail.emitting = true;
+
+        if (currentTarget != null)
         {
-            // Pick a random side of the enemy
-            Vector3 randomOffset = new Vector3(Random.Range(-2f, 2f), Random.Range(0.5f, 2f), Random.Range(-2f, 2f)).normalized * 2f;
-            Vector3 startPos = attackTarget.position + randomOffset;
-            Vector3 endPos = attackTarget.position - randomOffset; // Opposite side
-
-            // Instantly warp to start position (or fly very fast)
-            transform.position = startPos;
-            transform.LookAt(attackTarget.position + Vector3.up);
-
-            // Slash through!
-            float slashDuration = 0.1f;
-            float elapsed = 0f;
-            while (elapsed < slashDuration)
+            Vector3 targetHead = currentTarget.position + Vector3.up * 1.2f; 
+            
+            // Dash straight through the target's head from current position
+            Vector3 startPos = transform.position;
+            Vector3 dashDirection = (targetHead - startPos).normalized;
+            Vector3 endPos = targetHead + dashDirection * (orbitDistance + 1f); 
+            
+            // Point the sword straight at the target during the dash
+            if (dashDirection.sqrMagnitude > 0.001f)
             {
-                elapsed += Time.deltaTime;
-                transform.position = Vector3.Lerp(startPos, endPos, elapsed / slashDuration);
-                transform.Rotate(Vector3.forward, 3000f * Time.deltaTime); // Spin violently
-                yield return null;
+                transform.rotation = Quaternion.LookRotation(dashDirection);
             }
 
-            // Small pause before next slash
-            yield return new WaitForSeconds(0.4f);
+            float dashDuration = 0.15f;
+            float t = 0;
+
+            while (t < dashDuration)
+            {
+                if (currentTarget == null) break;
+                
+                transform.position = Vector3.Lerp(startPos, endPos, t / dashDuration);
+                t += Time.deltaTime;
+                yield return null;
+            }
+            
+            // Re-adjust orbit time so it smoothly continues orbiting near the end position
+            if (currentTarget != null)
+            {
+                // Simple heuristic to resume orbiting without huge snaps
+                orbitTime += Mathf.PI; 
+            }
         }
 
-        isAttacking = false;
+        if (currentTarget != null)
+        {
+            currentState = WeaponState.Orbit;
+        }
+        else
+        {
+            currentState = WeaponState.Idle;
+        }
     }
 }

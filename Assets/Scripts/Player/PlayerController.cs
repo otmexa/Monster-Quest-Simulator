@@ -88,7 +88,8 @@ public class PlayerController : MonoBehaviour
             {
                 if (hit.collider.GetComponent<Enemy>() != null)
                 {
-                    if (agent.isOnNavMesh) agent.SetDestination(hit.collider.transform.position);
+                    // Target enemy, but don't move towards it
+                    agent.ResetPath();
                     return;
                 }
 

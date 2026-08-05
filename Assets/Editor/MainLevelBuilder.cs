@@ -33,6 +33,24 @@ public class MainLevelBuilder : EditorWindow
         PlayerCombat combat = player.AddComponent<PlayerCombat>();
         TargetVisuals visuals = player.AddComponent<TargetVisuals>();
 
+        // 2a. Player Range Circle
+        GameObject pRangeCircle = new GameObject("PlayerRangeCircle");
+        pRangeCircle.transform.SetParent(player.transform);
+        pRangeCircle.transform.localPosition = new Vector3(0, -0.98f, 0);
+        pRangeCircle.transform.rotation = Quaternion.identity; 
+        
+        LineRenderer pLr = pRangeCircle.AddComponent<LineRenderer>();
+        pLr.startWidth = 0.1f;
+        pLr.endWidth = 0.1f;
+        
+        Material pRangeMat = new Material(Shader.Find("Sprites/Default"));
+        pRangeMat.color = new Color(1, 1, 1, 0.3f);
+        pLr.sharedMaterial = pRangeMat;
+        
+        CircleRenderer pCr = pRangeCircle.AddComponent<CircleRenderer>();
+        pCr.radius = 8.0f; // matches 8.0f attack range
+        pCr.segments = 64;
+
         // 3. WEAPON (CUBE)
         GameObject sword = GameObject.CreatePrimitive(PrimitiveType.Cube);
         sword.name = "SwordPlaceholder";
@@ -106,88 +124,122 @@ public class MainLevelBuilder : EditorWindow
         GameObject selectionPrefab = PrefabUtility.SaveAsPrefabAsset(selectionRing, "Assets/Prefabs/SelectionRing.prefab");
         DestroyImmediate(selectionRing);
 
-        visuals.selectionCirclePrefab = selectionPrefab;
-
-        // 5. ENEMY TEST
-        GameObject enemy = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        enemy.name = "TestEnemy";
-        enemy.transform.position = new Vector3(4, 1, 4);
-        Material enemyMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-        enemyMat.color = Color.red;
-        enemyMat.EnableKeyword("_EMISSION");
-        enemy.GetComponent<Renderer>().sharedMaterial = enemyMat;
+        // 4c. Respawn Magic Particles Prefab
+        GameObject respawnObj = new GameObject("RespawnMagicPrefab");
+        ParticleSystem ps = respawnObj.AddComponent<ParticleSystem>();
+        var main = ps.main;
+        main.duration = 1f;
+        main.loop = false;
+        main.startLifetime = 1.5f;
+        main.startSpeed = 5f;
+        main.startSize = 0.5f;
+        main.startColor = Color.yellow;
+        var em = ps.emission;
+        em.rateOverTime = 0;
+        em.SetBursts(new ParticleSystem.Burst[]{ new ParticleSystem.Burst(0f, 30) });
+        var shape = ps.shape;
+        shape.shapeType = ParticleSystemShapeType.Circle;
+        shape.radius = 2f;
+        ParticleSystemRenderer psr = respawnObj.GetComponent<ParticleSystemRenderer>();
+        psr.material = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+        psr.material.color = Color.yellow;
         
-        Enemy enemyScript = enemy.AddComponent<Enemy>();
-        enemyScript.damageNumberPrefab = damagePrefab;
+        GameObject respawnPrefab = PrefabUtility.SaveAsPrefabAsset(respawnObj, "Assets/Prefabs/RespawnMagic.prefab");
+        DestroyImmediate(respawnObj);
 
-        // 5a. Enemy Range Circle (Line Renderer)
-        GameObject eRangeCircle = new GameObject("RangeCircle");
-        eRangeCircle.transform.SetParent(enemy.transform);
-        eRangeCircle.transform.localPosition = new Vector3(0, -0.98f, 0);
-        eRangeCircle.transform.rotation = Quaternion.identity; // FIX: Keep horizontal
-        
-        LineRenderer rLr = eRangeCircle.AddComponent<LineRenderer>();
-        rLr.startWidth = 0.1f; // FIX: Thicker line
-        rLr.endWidth = 0.1f;
-        
-        Material eRangeMat = new Material(Shader.Find("Sprites/Default")); // FIX: Sprites/Default
-        eRangeMat.color = new Color(1, 1, 1, 0.3f);
-        rLr.sharedMaterial = eRangeMat;
-        
-        CircleRenderer rCr = eRangeCircle.AddComponent<CircleRenderer>();
-        rCr.radius = 8.0f; // matches 8.0f attack range
-        rCr.segments = 64;
-        
-        enemyScript.rangeCircle = eRangeCircle;
+        // 5. ENEMY TEST (SPAWN 3 DUMMIES)
+        Vector3[] spawnPoints = new Vector3[] {
+            new Vector3(4, 1, 4),
+            new Vector3(-4, 1, 6),
+            new Vector3(0, 1, 8)
+        };
 
-        // 5b. Enemy UI (Canvas for Health + Hover)
-        GameObject eCanvasObj = new GameObject("EnemyCanvas");
-        eCanvasObj.transform.SetParent(enemy.transform);
-        eCanvasObj.transform.localPosition = new Vector3(0, 1.8f, 0);
-        Canvas eCanvas = eCanvasObj.AddComponent<Canvas>();
-        eCanvas.renderMode = RenderMode.WorldSpace;
-        RectTransform eRect = eCanvasObj.GetComponent<RectTransform>();
-        eRect.sizeDelta = new Vector2(200, 100);
-        eRect.localScale = new Vector3(0.01f, 0.01f, 0.01f);
-        eCanvasObj.AddComponent<FaceCamera>();
+        for (int i = 0; i < spawnPoints.Length; i++)
+        {
+            GameObject enemy = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            enemy.name = "TestEnemy_" + i;
+            enemy.transform.position = spawnPoints[i];
+            Material enemyMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            enemyMat.color = Color.red;
+            enemyMat.EnableKeyword("_EMISSION");
+            enemy.GetComponent<Renderer>().sharedMaterial = enemyMat;
+            
+            Enemy enemyScript = enemy.AddComponent<Enemy>();
+            enemyScript.damageNumberPrefab = damagePrefab;
+            enemyScript.respawnParticlesPrefab = respawnPrefab;
 
-        // Health Bar BG
-        GameObject hbBg = new GameObject("HealthBarBG");
-        hbBg.transform.SetParent(eCanvasObj.transform, false);
-        Image bgImg = hbBg.AddComponent<Image>();
-        bgImg.color = Color.black;
-        RectTransform bgRect = hbBg.GetComponent<RectTransform>();
-        bgRect.sizeDelta = new Vector2(100, 15);
-        bgRect.anchoredPosition = new Vector2(0, 20);
+            // 5b. Enemy UI (Canvas for Health + Hover)
+            GameObject eCanvasObj = new GameObject("EnemyCanvas");
+            eCanvasObj.transform.SetParent(enemy.transform);
+            eCanvasObj.transform.localPosition = new Vector3(0, 1.8f, 0);
+            Canvas eCanvas = eCanvasObj.AddComponent<Canvas>();
+            eCanvas.renderMode = RenderMode.WorldSpace;
+            RectTransform eRect = eCanvasObj.GetComponent<RectTransform>();
+            eRect.sizeDelta = new Vector2(200, 100);
+            eRect.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+            eCanvasObj.AddComponent<FaceCamera>();
 
-        // Health Bar Fill
-        GameObject hbFill = new GameObject("HealthBarFill");
-        hbFill.transform.SetParent(hbBg.transform, false);
-        Image fillImg = hbFill.AddComponent<Image>();
-        fillImg.color = Color.green;
-        fillImg.type = Image.Type.Filled;
-        fillImg.fillMethod = Image.FillMethod.Horizontal;
-        fillImg.fillAmount = 1f;
-        RectTransform fillRect = hbFill.GetComponent<RectTransform>();
-        fillRect.anchorMin = Vector2.zero;
-        fillRect.anchorMax = Vector2.one;
-        fillRect.sizeDelta = Vector2.zero;
-        enemyScript.healthBarFill = fillImg;
+            // Health Bar BG
+            GameObject hbBg = new GameObject("HealthBarBG");
+            hbBg.transform.SetParent(eCanvasObj.transform, false);
+            Image bgImg = hbBg.AddComponent<Image>();
+            bgImg.sprite = Resources.GetBuiltinResource<Sprite>("UISprite.psd");
+            bgImg.type = Image.Type.Sliced;
+            bgImg.color = new Color(0.1f, 0.1f, 0.1f, 1f); // Dark Grey background
+            Outline bgOutline = hbBg.AddComponent<Outline>();
+            bgOutline.effectColor = Color.black;
+            bgOutline.effectDistance = new Vector2(1, -1);
+            RectTransform bgRect = hbBg.GetComponent<RectTransform>();
+            bgRect.sizeDelta = new Vector2(100, 15);
+            bgRect.anchoredPosition = new Vector2(0, 20);
 
-        // Hover Text ("Atacar")
-        GameObject hoverObj = new GameObject("HoverIcon");
-        hoverObj.transform.SetParent(eCanvasObj.transform, false);
-        Text eText = hoverObj.AddComponent<Text>();
-        eText.text = "Atacar";
-        eText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        eText.color = Color.white;
-        eText.fontSize = 32;
-        eText.alignment = TextAnchor.MiddleCenter;
-        RectTransform hRect = hoverObj.GetComponent<RectTransform>();
-        hRect.sizeDelta = new Vector2(200, 50);
-        hRect.anchoredPosition = new Vector2(0, -20);
-        
-        enemyScript.hoverCanvas = hoverObj; // Hide just this object on hover
+            // Health Bar Fill
+            GameObject hbFill = new GameObject("HealthBarFill");
+            hbFill.transform.SetParent(hbBg.transform, false);
+            Image fillImg = hbFill.AddComponent<Image>();
+            fillImg.sprite = Resources.GetBuiltinResource<Sprite>("UISprite.psd");
+            fillImg.color = Color.green;
+            fillImg.type = Image.Type.Filled;
+            fillImg.fillMethod = Image.FillMethod.Horizontal;
+            fillImg.fillAmount = 1f;
+            RectTransform fillRect = hbFill.GetComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.sizeDelta = Vector2.zero;
+            enemyScript.healthBarFill = fillImg;
+
+            // Health Bar Text (50/100)
+            GameObject hpTextObj = new GameObject("HealthText");
+            hpTextObj.transform.SetParent(hbBg.transform, false);
+            Text hpText = hpTextObj.AddComponent<Text>();
+            hpText.text = "100/100";
+            hpText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            hpText.color = Color.white;
+            hpText.fontSize = 12;
+            hpText.alignment = TextAnchor.MiddleCenter;
+            hpText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            hpText.verticalOverflow = VerticalWrapMode.Overflow;
+            hpTextObj.GetComponent<RectTransform>().sizeDelta = new Vector2(100, 20);
+            Outline hpOutline = hpTextObj.AddComponent<Outline>();
+            hpOutline.effectColor = Color.black;
+            hpOutline.effectDistance = new Vector2(1, -1);
+            enemyScript.healthText = hpText;
+
+            // Hover Text ("Atacar")
+            GameObject hoverObj = new GameObject("HoverIcon");
+            hoverObj.transform.SetParent(eCanvasObj.transform, false);
+            Text eText = hoverObj.AddComponent<Text>();
+            eText.text = "Atacar";
+            eText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            eText.color = Color.white;
+            eText.fontSize = 32;
+            eText.alignment = TextAnchor.MiddleCenter;
+            RectTransform hRect = hoverObj.GetComponent<RectTransform>();
+            hRect.sizeDelta = new Vector2(200, 50);
+            hRect.anchoredPosition = new Vector2(0, -20);
+            
+            enemyScript.hoverCanvas = hoverObj;
+        }
 
         // 6. UI CANVAS
         GameObject canvasObj = new GameObject("Canvas");

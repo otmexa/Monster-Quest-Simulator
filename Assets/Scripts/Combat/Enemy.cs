@@ -3,7 +3,6 @@ using UnityEngine.UI;
 
 public class Enemy : MonoBehaviour
 {
-    public GameObject rangeCircle;
     public GameObject hoverCanvas;
     public Image healthBarFill;
     public GameObject damageNumberPrefab;
@@ -12,15 +11,20 @@ public class Enemy : MonoBehaviour
     public bool isTargeted = false;
 
     private Material enemyMaterial;
-    private Material rangeCircleMaterial;
     private bool isHovered = false;
     private bool isInRange = false;
-
     private int maxHealth = 100;
     private int currentHealth;
 
+    public bool IsDead() { return currentHealth <= 0; }
+
+    public Text healthText;
+    public GameObject respawnParticlesPrefab;
+    private Vector3 startPosition;
+
     void Start()
     {
+        startPosition = transform.position;
         currentHealth = maxHealth;
         UpdateHealthBar();
 
@@ -31,16 +35,6 @@ public class Enemy : MonoBehaviour
             enemyMaterial.EnableKeyword("_EMISSION");
         }
 
-        if (rangeCircle != null)
-        {
-            Renderer circleRend = rangeCircle.GetComponent<Renderer>();
-            if (circleRend != null)
-            {
-                rangeCircleMaterial = circleRend.material;
-            }
-            rangeCircle.SetActive(false);
-        }
-
         if (hoverCanvas != null)
         {
             hoverCanvas.SetActive(false);
@@ -49,27 +43,7 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
-        // 1. Range Circle Opacity (Pulse)
-        if (rangeCircle != null)
-        {
-            if (isInRange && !isTargeted && currentHealth > 0)
-            {
-                rangeCircle.SetActive(true);
-                if (rangeCircleMaterial != null)
-                {
-                    float pulse = (Mathf.Sin(Time.time * 5f) * 0.5f + 0.5f) * 0.3f + 0.05f;
-                    Color c = rangeCircleMaterial.color;
-                    c.a = pulse;
-                    rangeCircleMaterial.color = c;
-                }
-            }
-            else
-            {
-                rangeCircle.SetActive(false);
-            }
-        }
-
-        // 2. Glow (Emission)
+        // 1. Glow (Emission)
         if (enemyMaterial != null)
         {
             float targetGlow = (isInRange && currentHealth > 0) ? 0.05f : 0.0f;
@@ -77,7 +51,7 @@ public class Enemy : MonoBehaviour
             enemyMaterial.SetColor("_EmissionColor", emissionColor);
         }
 
-        // 3. Hover Icon
+        // 2. Hover Icon
         if (hoverCanvas != null)
         {
             hoverCanvas.SetActive(isHovered && !isTargeted && currentHealth > 0);
@@ -101,10 +75,41 @@ public class Enemy : MonoBehaviour
 
         UpdateHealthBar();
 
+        StartCoroutine(HitEffectRoutine());
+
         if (currentHealth <= 0)
         {
-            Die();
+            StartCoroutine(DieRoutine());
         }
+    }
+
+    System.Collections.IEnumerator HitEffectRoutine()
+    {
+        if (enemyMaterial != null)
+        {
+            enemyMaterial.SetColor("_EmissionColor", Color.white * 2f);
+        }
+
+        Vector3 originalScale = new Vector3(1, 1, 1);
+        Vector3 targetScale = new Vector3(1.3f, 0.7f, 1.3f);
+
+        float t = 0;
+        while (t < 0.1f)
+        {
+            transform.localScale = Vector3.Lerp(originalScale, targetScale, t / 0.1f);
+            t += Time.deltaTime;
+            yield return null;
+        }
+        
+        t = 0;
+        while (t < 0.2f)
+        {
+            transform.localScale = Vector3.Lerp(targetScale, originalScale, t / 0.2f);
+            t += Time.deltaTime;
+            yield return null;
+        }
+
+        transform.localScale = originalScale;
     }
 
     void UpdateHealthBar()
@@ -123,12 +128,15 @@ public class Enemy : MonoBehaviour
             else
                 healthBarFill.color = new Color(0.2f, 0f, 0f); // Dark Red
         }
+
+        if (healthText != null)
+        {
+            healthText.text = currentHealth + "/" + maxHealth;
+        }
     }
 
-    void Die()
+    System.Collections.IEnumerator DieRoutine()
     {
-        // Simple death sequence
-        if (rangeCircle != null) rangeCircle.SetActive(false);
         if (hoverCanvas != null) hoverCanvas.SetActive(false);
         isTargeted = false;
         
@@ -142,6 +150,31 @@ public class Enemy : MonoBehaviour
         if (healthBarFill != null && healthBarFill.transform.parent != null)
         {
             healthBarFill.transform.parent.gameObject.SetActive(false);
+        }
+
+        // Wait 7 seconds before magic starts
+        yield return new WaitForSeconds(7f);
+
+        // Flash respawn magic 3 times
+        for (int i = 0; i < 3; i++)
+        {
+            if (respawnParticlesPrefab != null)
+            {
+                Instantiate(respawnParticlesPrefab, startPosition, Quaternion.Euler(-90, 0, 0));
+            }
+            yield return new WaitForSeconds(1f);
+        }
+
+        // Respawn!
+        transform.position = startPosition;
+        currentHealth = maxHealth;
+        UpdateHealthBar();
+
+        if (rend != null) rend.enabled = true;
+        if (col != null) col.enabled = true;
+        if (healthBarFill != null && healthBarFill.transform.parent != null)
+        {
+            healthBarFill.transform.parent.gameObject.SetActive(true);
         }
     }
 
