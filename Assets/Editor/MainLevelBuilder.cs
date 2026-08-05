@@ -70,7 +70,7 @@ public class MainLevelBuilder : EditorWindow
         floatingWeapon.player = player.transform;
 
         // Material for Trail
-        Material trailMat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+        Material trailMat = new Material(Shader.Find("Sprites/Default"));
         trailMat.color = Color.cyan;
 
         // Trail Anchor (at the back tip of the sword)
