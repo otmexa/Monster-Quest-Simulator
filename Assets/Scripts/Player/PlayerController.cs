@@ -44,8 +44,8 @@ public class PlayerController : MonoBehaviour
             // Let CameraController handle A and D for turning, or handle standard strafing here.
             // Wait, if A and D rotate the camera, we only move forward/backward here. 
             // Or if A/D still strafes, we just use them as moveX.
-            if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) moveX -= 1f;
-            if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) moveX += 1f;
+            if (Keyboard.current.aKey.isPressed) moveX -= 1f;
+            if (Keyboard.current.dKey.isPressed) moveX += 1f;
         }
 
         Vector3 inputDir = new Vector3(moveX, 0, moveZ).normalized;

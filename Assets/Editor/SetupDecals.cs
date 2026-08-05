@@ -24,7 +24,7 @@ public class SetupDecals : EditorWindow
             AssetDatabase.CreateFolder("Assets", "Resources");
         }
 
-        Texture2D yellowTex = CreateNeonRingTexture("CircleDecalTex_Yellow", new Color(1f, 0.9f, 0f, 1f), 0.02f);
+        Texture2D yellowTex = CreateNeonRingTexture("CircleDecalTex_Yellow", new Color(1f, 0.9f, 0f, 1f), 0.01f);
         Texture2D greenTex = CreateNeonRingTexture("CircleDecalTex_Green", new Color(0f, 1f, 0f, 1f), 0.08f);
         Texture2D orangeTex = CreateNeonRingTexture("CircleDecalTex_Orange", new Color(1f, 0.5f, 0f, 1f), 0.08f);
         

@@ -166,8 +166,18 @@ public class MainLevelBuilder : EditorWindow
             enemy.name = "TestEnemy_" + i;
             enemy.transform.position = spawnPoints[i];
             Material enemyMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            enemyMat.color = Color.red;
+            enemyMat.color = new Color(0.55f, 0.27f, 0.07f); // Wood brown
             enemyMat.EnableKeyword("_EMISSION");
+            // MAGIC TRICK: URP Decals do NOT project onto the Transparent queue!
+            enemyMat.SetFloat("_Surface", 1f); // 1 = Transparent
+            enemyMat.SetFloat("_Blend", 0f); // 0 = Alpha (Standard)
+            enemyMat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            enemyMat.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            enemyMat.SetFloat("_ZWrite", 1f); // Force Z-Write ON so it sorts correctly
+            enemyMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            enemyMat.SetOverrideTag("RenderType", "Transparent");
+            enemyMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            
             enemy.GetComponent<Renderer>().sharedMaterial = enemyMat;
             
             Enemy enemyScript = enemy.AddComponent<Enemy>();
