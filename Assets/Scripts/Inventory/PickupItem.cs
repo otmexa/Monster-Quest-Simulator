@@ -28,6 +28,9 @@ namespace MonsterQuest.Inventory
         {
             col = GetComponent<Collider>();
             if (col != null) col.isTrigger = true; 
+            
+            Rigidbody rb = GetComponent<Rigidbody>();
+            if (rb != null) rb.isKinematic = true; // Floating, no gravity!
         }
 
         public bool CanBeMagnetized()
@@ -47,24 +50,24 @@ namespace MonsterQuest.Inventory
             isFlying.Value = true;
             
             // Tell all clients this item is now flying (so they disable physics and start Lerping it visually)
-            FlightStartedClientRpc();
+            FlightStartedRpc();
         }
 
-        [ClientRpc]
-        private void FlightStartedClientRpc()
+        [Rpc(SendTo.ClientsAndHost)]
+        private void FlightStartedRpc()
         {
             if (col != null) col.enabled = false; 
-            
-            Rigidbody rb = GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                rb.isKinematic = true; 
-                rb.linearVelocity = Vector3.zero;
-            }
         }
 
         void Update()
         {
+            // Floating bobbing effect when idle
+            if (!isFlying.Value)
+            {
+                transform.position += new Vector3(0, Mathf.Sin(Time.time * 3f) * 0.005f, 0);
+                transform.Rotate(0, 45f * Time.deltaTime, 0);
+            }
+
             // If it's flying on the server, we move it
             // Ideally, for perfect smoothness, clients should also predict the flight, but server authority is safer for now.
             if (!IsServer || !isFlying.Value || target == null) return;
@@ -99,14 +102,14 @@ namespace MonsterQuest.Inventory
             }
 
             // Spawn VFX via ClientRpc so everyone sees it
-            SpawnVFXClientRpc(transform.position);
+            SpawnVFXRpc(transform.position);
 
             // Destroy over the network
             GetComponent<NetworkObject>().Despawn(true);
         }
 
-        [ClientRpc]
-        private void SpawnVFXClientRpc(Vector3 pos)
+        [Rpc(SendTo.ClientsAndHost)]
+        private void SpawnVFXRpc(Vector3 pos)
         {
             if (collectVFX != null)
             {

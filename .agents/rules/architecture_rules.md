@@ -5,6 +5,12 @@ description: Reglas fundamentales de arquitectura, UI y diseño de juego para Mo
 
 # 🏗️ Reglas de Arquitectura y Diseño: Monster Quest Simulator
 
+## 0. Práctica de Desarrollo Obligatoria 🚨
+* **Regla:** JAMÁS dar instrucciones manuales al usuario para que mueva cosas en el Editor de Unity.
+* **Práctica:** Todo debe ser automatizado por el agente (usando scripts `[InitializeOnLoad]` o MCP tools). El usuario no debe dar un solo clic en la interfaz para arreglar bugs.
+* **Regla:** JAMÁS adivinar la sintaxis de una API nueva o de paquetes que cambian constantemente (como Unity 6 o Netcode for GameObjects 2+).
+* **Práctica:** Al implementar una librería nueva o corregir un bug de sintaxis, siempre se debe consultar la documentación oficial (usar búsqueda web enfocada a "Documentation") en lugar de foros o memoria de versiones viejas.
+
 Este documento contiene los pilares de diseño que Antigravity DEBE respetar en todo momento al escribir código, diseñar interfaces o estructurar la lógica del juego.
 
 ## 1. UI 100% Responsiva 📱
@@ -34,4 +40,8 @@ Este documento contiene los pilares de diseño que Antigravity DEBE respetar en 
 
 ## 7. Economía de la Dopamina (Upgrades) 🧲
 * **Práctica:** La recolección magnética es nativa para generar dopamina, pero el **Rango de Magnetismo** será una estadística escalable (comprable/mejorable por el jugador) para dar sensación de poder y progresión.
+
+## 8. Arquitectura Multijugador (Servidor Dedicado) 🌐
+* **Regla:** Nunca confíes en el cliente (Autoridad del Servidor).
+* **Práctica:** Usamos **Unity Netcode for GameObjects (NGO) v2.0+**. Toda la lógica que afecte la economía (oro, drops, inventario) o la salud debe ejecutarse exclusivamente en el Servidor (`IsServer`). El cliente solo recibe confirmaciones visuales (ClientRpc) y envía peticiones. Los servidores se diseñarán para correr en modalidad *Headless* (sin gráficos) para poder alojarse en un VPS económico.
 

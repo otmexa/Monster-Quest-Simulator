@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 
-public class PlayerCombat : MonoBehaviour
+public class PlayerCombat : NetworkBehaviour
 {
     public float attackRange = 8.0f;
     public float attackSpeed = 2.0f;
@@ -26,10 +27,21 @@ public class PlayerCombat : MonoBehaviour
         {
             rangeProjector = rangeCircle.GetComponent<UnityEngine.Rendering.Universal.DecalProjector>();
         }
+        
+        if (swordPlaceholder == null)
+        {
+            Transform sword = transform.Find("Sword");
+            if (sword != null)
+            {
+                swordPlaceholder = sword.gameObject;
+            }
+        }
     }
 
     void Update()
     {
+        if (!IsOwner) return;
+
         HandleTargetSelection();
         UpdateProximity();
         HandleAutoAttack();

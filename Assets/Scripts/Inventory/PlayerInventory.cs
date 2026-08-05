@@ -68,12 +68,12 @@ namespace MonsterQuest.Inventory
             }
 
             // Tell the client that actually owns this player to update its UI
-            UpdateClientInventoryClientRpc(itemData.id, itemInventory[itemData.id]);
+            UpdateClientInventoryRpc(itemData.id, itemInventory[itemData.id]);
             Debug.Log($"[Server] {gameObject.name} Collected {amount}x {itemData.displayName}. Total: {itemInventory[itemData.id]}");
         }
 
-        [ClientRpc]
-        private void UpdateClientInventoryClientRpc(string itemID, int newTotalAmount)
+        [Rpc(SendTo.ClientsAndHost)]
+        private void UpdateClientInventoryRpc(string itemID, int newTotalAmount)
         {
             // Only update UI if this is our local player
             if (!IsOwner) return;

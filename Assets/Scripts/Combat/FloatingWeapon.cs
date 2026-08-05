@@ -21,6 +21,12 @@ public class FloatingWeapon : MonoBehaviour
     void Start()
     {
         trail = GetComponentInChildren<TrailRenderer>();
+        if (player == null && transform.parent != null)
+        {
+            player = transform.parent;
+        }
+        // Desvincular del jugador para que flote suavemente en el mundo sin temblar
+        transform.SetParent(null);
     }
 
     void Update()

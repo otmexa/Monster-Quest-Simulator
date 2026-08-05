@@ -14,6 +14,18 @@ public class PlayerController : NetworkBehaviour
     private CharacterController controller;
     private Camera mainCamera;
 
+    public override void OnNetworkSpawn()
+    {
+        if (IsOwner)
+        {
+            CameraController cam = FindFirstObjectByType<CameraController>();
+            if (cam != null)
+            {
+                cam.target = this.transform;
+            }
+        }
+    }
+
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
