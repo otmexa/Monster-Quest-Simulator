@@ -1,10 +1,11 @@
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem; // NEW INPUT SYSTEM
+using Unity.Netcode;
 
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(CharacterController))]
-public class PlayerController : MonoBehaviour
+public class PlayerController : NetworkBehaviour
 {
     public float moveSpeed = 5f;
     public GameObject clickParticlePrefab;
@@ -26,6 +27,8 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (!IsOwner) return;
+
         HandleKeyboardJoystickMovement();
         HandleClickToMove();
         
