@@ -14,7 +14,7 @@ public class PlayerCombat : MonoBehaviour
     private NavMeshAgent agent;
 
     private float lastAttackTime = 0f;
-    private Material rangeMaterial;
+    private UnityEngine.Rendering.Universal.DecalProjector rangeProjector;
 
     void Start()
     {
@@ -24,11 +24,7 @@ public class PlayerCombat : MonoBehaviour
         Transform rangeCircle = transform.Find("PlayerRangeCircle");
         if (rangeCircle != null)
         {
-            UnityEngine.Rendering.Universal.DecalProjector dp = rangeCircle.GetComponent<UnityEngine.Rendering.Universal.DecalProjector>();
-            if (dp != null)
-            {
-                rangeMaterial = dp.material;
-            }
+            rangeProjector = rangeCircle.GetComponent<UnityEngine.Rendering.Universal.DecalProjector>();
         }
     }
 
@@ -38,12 +34,10 @@ public class PlayerCombat : MonoBehaviour
         UpdateProximity();
         HandleAutoAttack();
 
-        if (rangeMaterial != null)
+        if (rangeProjector != null)
         {
-            float alpha = (Mathf.Sin(Time.time * 3f) * 0.5f + 0.5f) * 0.15f + 0.05f;
-            Color c = rangeMaterial.color;
-            c.a = alpha;
-            rangeMaterial.color = c;
+            float alpha = (Mathf.Sin(Time.time * 3f) * 0.5f + 0.5f) * 0.4f + 0.2f;
+            rangeProjector.fadeFactor = alpha;
         }
     }
 

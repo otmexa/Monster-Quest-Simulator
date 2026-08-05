@@ -24,10 +24,13 @@ public class SetupDecals : EditorWindow
             AssetDatabase.CreateFolder("Assets", "Resources");
         }
 
-        Texture2D circleTex = CreateCircleTexture();
-        CreateDecalMaterial("Assets/Resources/PlayerRangeDecal.mat", new Color(1f, 1f, 0f, 0.2f), circleTex);
-        CreateDecalMaterial("Assets/Resources/TargetPrimaryDecal.mat", Color.green, circleTex);
-        CreateDecalMaterial("Assets/Resources/TargetQueuedDecal.mat", new Color(1f, 0.5f, 0f, 1f), circleTex);
+        Texture2D yellowTex = CreateNeonRingTexture("CircleDecalTex_Yellow", new Color(1f, 0.9f, 0f, 1f), 0.02f);
+        Texture2D greenTex = CreateNeonRingTexture("CircleDecalTex_Green", new Color(0f, 1f, 0f, 1f), 0.08f);
+        Texture2D orangeTex = CreateNeonRingTexture("CircleDecalTex_Orange", new Color(1f, 0.5f, 0f, 1f), 0.08f);
+        
+        CreateDecalMaterial("Assets/Resources/PlayerRangeDecal.mat", yellowTex);
+        CreateDecalMaterial("Assets/Resources/TargetPrimaryDecal.mat", greenTex);
+        CreateDecalMaterial("Assets/Resources/TargetQueuedDecal.mat", orangeTex);
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -35,55 +38,49 @@ public class SetupDecals : EditorWindow
         Debug.Log("Decal Materials generated successfully!");
     }
 
-    private static void CreateDecalMaterial(string path, Color color, Texture2D circleTex)
+    private static void CreateDecalMaterial(string path, Texture2D circleTex)
     {
         Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
         if (mat == null)
         {
             Shader decalShader = Shader.Find("Shader Graphs/Decal");
             if (decalShader == null) decalShader = Shader.Find("Universal Render Pipeline/Decal");
-            if (decalShader == null)
-            {
-                Debug.LogError("Decal shader not found! Make sure the URP package is up to date.");
-                return;
-            }
+            if (decalShader == null) return;
             
             mat = new Material(decalShader);
-            mat.SetColor("_BaseColor", color);
-            if (circleTex != null) mat.SetTexture("_BaseMap", circleTex);
+            if (circleTex != null) mat.SetTexture("Base_Map", circleTex);
             AssetDatabase.CreateAsset(mat, path);
         }
         else
         {
-            mat.SetColor("_BaseColor", color);
-            if (circleTex != null) mat.SetTexture("_BaseMap", circleTex);
+            if (circleTex != null) mat.SetTexture("Base_Map", circleTex);
         }
     }
 
-    private static Texture2D CreateCircleTexture()
+    private static Texture2D CreateNeonRingTexture(string name, Color color, float thicknessRatio = 0.1f)
     {
-        string path = "Assets/Resources/CircleDecalTex.png";
-        Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-        if (tex != null) return tex;
-
-        int size = 256;
-        tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        Color transparent = new Color(1, 1, 1, 0);
-        Color solid = new Color(1, 1, 1, 1);
+        string path = $"Assets/Resources/{name}.png";
+        
+        int size = 512; // Increased resolution so the thin ring doesn't look pixelated
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        Color transparent = new Color(0, 0, 0, 0);
         
         float radius = size / 2f;
         float center = size / 2f;
+        float ringCenter = radius * (1f - thicknessRatio);
+        float thickness = radius * thicknessRatio;
         
         for (int y = 0; y < size; y++)
         {
             for (int x = 0; x < size; x++)
             {
                 float dist = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
-                if (dist < radius)
+                float diff = Mathf.Abs(dist - ringCenter);
+                
+                if (diff < thickness)
                 {
-                    // Smooth edges
-                    float alpha = Mathf.Clamp01((radius - dist) / 2f);
-                    tex.SetPixel(x, y, new Color(1, 1, 1, alpha));
+                    float alpha = 1f - (diff / thickness);
+                    tex.SetPixel(x, y, new Color(color.r, color.g, color.b, alpha * color.a));
                 }
                 else
                 {
@@ -93,11 +90,10 @@ public class SetupDecals : EditorWindow
         }
         
         tex.Apply();
-        byte[] bytes = tex.EncodeToPNG();
-        System.IO.File.WriteAllBytes(Application.dataPath + "/Resources/CircleDecalTex.png", bytes);
-        AssetDatabase.ImportAsset("Assets/Resources/CircleDecalTex.png");
+        System.IO.File.WriteAllBytes(Application.dataPath + $"/Resources/{name}.png", tex.EncodeToPNG());
+        AssetDatabase.ImportAsset(path);
         
-        TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath("Assets/Resources/CircleDecalTex.png");
+        TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
         if (importer != null)
         {
             importer.alphaIsTransparency = true;
@@ -105,6 +101,6 @@ public class SetupDecals : EditorWindow
             importer.SaveAndReimport();
         }
         
-        return AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/CircleDecalTex.png");
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
     }
 }
