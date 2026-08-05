@@ -41,21 +41,32 @@ public class PlayerController : MonoBehaviour
         {
             if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) moveZ += 1f;
             if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) moveZ -= 1f;
+            // Let CameraController handle A and D for turning, or handle standard strafing here.
+            // Wait, if A and D rotate the camera, we only move forward/backward here. 
+            // Or if A/D still strafes, we just use them as moveX.
             if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) moveX -= 1f;
             if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) moveX += 1f;
         }
 
-        Vector3 move = new Vector3(moveX, 0, moveZ).normalized;
+        Vector3 inputDir = new Vector3(moveX, 0, moveZ).normalized;
 
-        if (move.magnitude > 0.1f)
+        if (inputDir.magnitude > 0.1f)
         {
-            // If we are using WASD, stop the NavMeshAgent
             agent.ResetPath();
             
-            // Move via CharacterController
+            // Move relative to camera yaw
+            Vector3 camForward = mainCamera.transform.forward;
+            camForward.y = 0;
+            camForward.Normalize();
+            
+            Vector3 camRight = mainCamera.transform.right;
+            camRight.y = 0;
+            camRight.Normalize();
+
+            Vector3 move = camForward * inputDir.z + camRight * inputDir.x;
+            
             controller.Move(move * moveSpeed * Time.deltaTime);
             
-            // Rotate towards movement direction
             Quaternion targetRotation = Quaternion.LookRotation(move);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 10f * Time.deltaTime);
         }

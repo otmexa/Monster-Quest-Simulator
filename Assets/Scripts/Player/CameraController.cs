@@ -29,14 +29,21 @@ public class CameraController : MonoBehaviour
     {
         if (target == null) return;
 
-        // Handle Orbit (Roblox style: Right click drag)
+        // Handle Orbit (Roblox style: Right click drag OR Left/Right Arrow keys)
         if (Mouse.current != null && Mouse.current.rightButton.isPressed)
         {
             Vector2 mouseDelta = Mouse.current.delta.ReadValue();
             currentYaw += mouseDelta.x * orbitSpeed;
             currentPitch -= mouseDelta.y * orbitSpeed;
-            currentPitch = Mathf.Clamp(currentPitch, minVerticalAngle, maxVerticalAngle);
         }
+        else if (Keyboard.current != null)
+        {
+            // Keyboard Arrow keys can also rotate camera (classic MMO)
+            if (Keyboard.current.leftArrowKey.isPressed) currentYaw -= 100f * Time.deltaTime;
+            if (Keyboard.current.rightArrowKey.isPressed) currentYaw += 100f * Time.deltaTime;
+        }
+        
+        currentPitch = Mathf.Clamp(currentPitch, minVerticalAngle, maxVerticalAngle);
 
         // Handle Zoom (Scroll wheel)
         if (Mouse.current != null)

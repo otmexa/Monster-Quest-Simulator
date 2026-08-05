@@ -4,7 +4,7 @@ using UnityEngine.InputSystem; // NEW INPUT SYSTEM
 
 public class PlayerCombat : MonoBehaviour
 {
-    public float attackRange = 2.0f;
+    public float attackRange = 8.0f;
     public GameObject swordPlaceholder;
     
     private Transform currentTarget;
@@ -23,7 +23,21 @@ public class PlayerCombat : MonoBehaviour
     void Update()
     {
         HandleTargetSelection();
+        UpdateProximity();
         HandleAutoAttack();
+    }
+
+    void UpdateProximity()
+    {
+        // Find all enemies to update their range status
+        Enemy[] allEnemies = FindObjectsByType<Enemy>(FindObjectsInactive.Exclude);
+        foreach (Enemy e in allEnemies)
+        {
+            if (e == null) continue;
+            
+            float distance = Vector3.Distance(transform.position, e.transform.position);
+            e.SetInRange(distance <= attackRange);
+        }
     }
 
     void HandleTargetSelection()
@@ -38,20 +52,23 @@ public class PlayerCombat : MonoBehaviour
 
             if (Physics.Raycast(ray, out hit))
             {
-                if (hit.collider.GetComponent<Enemy>() != null)
+                Enemy clickedEnemy = hit.collider.GetComponent<Enemy>();
+                if (clickedEnemy != null)
                 {
-                    currentTarget = hit.collider.transform;
-                    if (targetVisuals != null)
-                        targetVisuals.SelectTarget(currentTarget);
+                    // Clear previous target
+                    if (currentTarget != null)
+                    {
+                        Enemy prevEnemy = currentTarget.GetComponent<Enemy>();
+                        if (prevEnemy != null) prevEnemy.isTargeted = false;
+                    }
                     
-                    Debug.Log("Target Selected: " + currentTarget.name);
-                }
-                else
-                {
-                    // Clicked on ground or elsewhere
-                    currentTarget = null;
+                    currentTarget = hit.collider.transform;
+                    clickedEnemy.isTargeted = true;
+                    
                     if (targetVisuals != null)
-                        targetVisuals.ClearTarget();
+                    {
+                        targetVisuals.SelectTarget(currentTarget);
+                    }
                 }
             }
         }
@@ -59,66 +76,57 @@ public class PlayerCombat : MonoBehaviour
 
     void HandleAutoAttack()
     {
-        if (currentTarget == null) return;
+        if (currentTarget == null)
+        {
+            StopWeaponOrbit();
+            return;
+        }
 
         float distance = Vector3.Distance(transform.position, currentTarget.position);
-        
         if (distance <= attackRange)
         {
-            // We are close enough to attack
-            // Stop moving if NavMesh was driving us there
-            agent.ResetPath();
-
             // Rotate towards enemy
             Vector3 direction = (currentTarget.position - transform.position).normalized;
             direction.y = 0;
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), 10f * Time.deltaTime);
+            if (direction.magnitude > 0.1f)
+            {
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), 10f * Time.deltaTime);
+            }
 
             if (Time.time >= lastAttackTime + attackCooldown)
             {
                 Attack();
+                
+                Enemy e = currentTarget.GetComponent<Enemy>();
+                if (e != null)
+                {
+                    e.TakeDamage(5); // 5 damage per hit
+                }
+
                 lastAttackTime = Time.time;
             }
+        }
+        else
+        {
+            StopWeaponOrbit();
         }
     }
 
     void Attack()
     {
-        Debug.Log("Attacking " + currentTarget.name);
-        // We will trigger a simple swing animation on the sword here
         if (swordPlaceholder != null)
         {
-            Animation anim = swordPlaceholder.GetComponent<Animation>();
-            if (anim != null)
-            {
-                anim.Play();
-            }
-            else
-            {
-                // Fallback procedural swing
-                StartCoroutine(ProceduralSwing());
-            }
+            FloatingWeapon fw = swordPlaceholder.GetComponent<FloatingWeapon>();
+            if (fw != null) fw.Attack(currentTarget);
         }
     }
 
-    System.Collections.IEnumerator ProceduralSwing()
+    void StopWeaponOrbit()
     {
-        TrailRenderer trail = swordPlaceholder.GetComponentInChildren<TrailRenderer>();
-        if (trail != null) trail.emitting = true;
-
-        float duration = 0.2f;
-        float elapsed = 0f;
-        Quaternion startRot = swordPlaceholder.transform.localRotation;
-        Quaternion endRot = startRot * Quaternion.Euler(90, 0, 0);
-
-        while (elapsed < duration)
+        if (swordPlaceholder != null)
         {
-            elapsed += Time.deltaTime;
-            swordPlaceholder.transform.localRotation = Quaternion.Slerp(startRot, endRot, elapsed / duration);
-            yield return null;
+            FloatingWeapon fw = swordPlaceholder.GetComponent<FloatingWeapon>();
+            if (fw != null) fw.StopAttack();
         }
-
-        swordPlaceholder.transform.localRotation = startRot; // reset
-        if (trail != null) trail.emitting = false;
     }
 }

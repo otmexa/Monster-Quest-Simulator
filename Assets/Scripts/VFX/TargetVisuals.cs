@@ -12,9 +12,12 @@ public class TargetVisuals : MonoBehaviour
         ClearTarget();
         if (target != null && selectionCirclePrefab != null)
         {
-            currentSelectionCircle = Instantiate(selectionCirclePrefab, target.position, Quaternion.Euler(90, 0, 0), target);
-            // Slightly lift it so it doesn't z-fight with the floor
-            currentSelectionCircle.transform.localPosition = new Vector3(0, 0.05f, 0);
+            currentSelectionCircle = Instantiate(selectionCirclePrefab, target);
+            // Snap to floor globally
+            Vector3 pos = target.position;
+            pos.y = 0.05f;
+            currentSelectionCircle.transform.position = pos;
+            currentSelectionCircle.transform.rotation = Quaternion.Euler(90, 0, 0);
         }
     }
 
