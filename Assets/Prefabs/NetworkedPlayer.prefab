@@ -18,6 +18,8 @@ GameObject:
   - component: {fileID: 2955809798405508733}
   - component: {fileID: 192680880960970895}
   - component: {fileID: 621482651609179109}
+  - component: {fileID: 1930249758755237004}
+  - component: {fileID: 4501182187833912825}
   m_Layer: 0
   m_Name: NetworkedPlayer
   m_TagString: Player
@@ -238,6 +240,57 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b11b3bb3d210587438d926379e9d5fef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TargetVisuals
+--- !u!114 &1930249758755237004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1980316446354178251}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c226d6e6723eac841aec82ee4eefc071, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterQuest.Inventory.PlayerInventory
+  ShowTopMostFoldoutHeaderGroup: 1
+  goldAmount:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  soulAmount:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  experienceAmount:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  currentLevel:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 1
+--- !u!114 &4501182187833912825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1980316446354178251}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50bcfbefb022c7e4799338c5a648ab27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterQuest.Inventory.LootMagnet
+  ShowTopMostFoldoutHeaderGroup: 1
+  magnetRadius: 5
+  lootLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  scanRate: 0.2
 --- !u!1 &6047302456312787096
 GameObject:
   m_ObjectHideFlags: 0
@@ -562,6 +615,7 @@ MonoBehaviour:
     type: 2
     rarity: 0
     orientation: 0
+    customRotationOffset: {x: 0, y: 0, z: 0}
     damage: 5
     sellValue: 10
     buyValue: 50

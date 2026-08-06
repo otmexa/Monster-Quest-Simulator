@@ -303,12 +303,7 @@ public class MainLevelBuilder : EditorWindow
         Button btnAxe = CreateButton("BtnAxe", "Equip Axe", new Vector2(100, 50), panel.transform);
         Button btnConfirm = CreateButton("BtnConfirm", "CONFIRM", new Vector2(0, -50), panel.transform);
 
-        WeaponSelectionUI uiScript = canvasObj.AddComponent<WeaponSelectionUI>();
-        uiScript.selectionPanel = panel;
-        uiScript.btnSword = btnSword;
-        uiScript.btnAxe = btnAxe;
-        uiScript.btnConfirm = btnConfirm;
-        uiScript.playerCombat = combat;
+        // WeaponSelectionUI ahora se autogenera, por lo que el builder ya no necesita instanciarlo.
 
         // Event System
         GameObject eventSystem = new GameObject("EventSystem");

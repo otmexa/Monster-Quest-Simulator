@@ -48,17 +48,19 @@ public class DataManager : MonoBehaviour
     {
         if (File.Exists(saveFilePath))
         {
-            // Si el archivo existe, lo leemos y reconstruimos la clase PlayerData
             string json = File.ReadAllText(saveFilePath);
             Data = JsonUtility.FromJson<PlayerData>(json);
+            
+            if (Data.gold < 100000) Data.gold = 100000; // Cheat code for testing eggs
+            
             Debug.Log("Datos cargados correctamente.");
         }
         else
         {
-            // Si es la primera vez que abre el juego, creamos datos nuevos y limpios
             Debug.Log("No se encontró archivo de guardado. Creando un perfil nuevo...");
             Data = new PlayerData();
-            SaveData(); // Guardamos este perfil nuevo inmediatamente
+            Data.gold = 100000; // Starting money
+            SaveData(); 
         }
     }
 }

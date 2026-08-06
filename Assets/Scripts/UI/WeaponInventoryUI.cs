@@ -48,12 +48,24 @@ public class WeaponInventoryUI : MonoBehaviour
         public GameObject uiSlot;
     }
 
-    void Start()
+
+
+    void ReloadInventory()
     {
-        // Cargar armas reales desde la base de datos central JSON
+        inventory.Clear();
+        currentEquipped = 0;
+
+        // Find PlayerInventory
+        MonsterQuest.Inventory.PlayerInventory pInv = null;
+        if (playerCombat != null) pInv = playerCombat.GetComponent<MonsterQuest.Inventory.PlayerInventory>();
+        else 
+        {
+            GameObject player = GameObject.Find("NetworkedPlayer(Clone)"); 
+            if (player == null) player = GameObject.Find("NetworkedPlayer");
+            if (player != null) pInv = player.GetComponent<MonsterQuest.Inventory.PlayerInventory>();
+        }
+
         var db = MonsterQuest.Inventory.WeaponDatabase.GetDatabase();
-        
-        // Juntamos todas las armas de todos los mundos para el inventario global
         List<MonsterQuest.Inventory.WeaponData> allItems = new List<MonsterQuest.Inventory.WeaponData>();
         foreach(var uni in db.universes)
         {
@@ -67,16 +79,14 @@ public class WeaponInventoryUI : MonoBehaviour
         {
             if (item.type != MonsterQuest.Inventory.ItemType.Weapon) continue;
             
-            bool isSavedAsEquipped = false;
-            
-            // Revisar si está equipada en los datos guardados
-            if (DataManager.Instance != null && DataManager.Instance.Data.inventory.equippedWeapons.Contains(item.id))
-            {
-                isSavedAsEquipped = true;
-                currentEquipped++;
-            }
+            // SOLO agregar si el jugador realmente lo tiene en su inventario (o si está equipado en DataManager)
+            bool isSavedAsEquipped = DataManager.Instance != null && DataManager.Instance.Data.inventory.equippedWeapons.Contains(item.id);
+            int amountOwned = pInv != null ? pInv.GetItemCount(item.id) : 0;
 
-            // Cargar el ícono desde Resources
+            if (amountOwned <= 0 && !isSavedAsEquipped) continue;
+
+            if (isSavedAsEquipped) currentEquipped++;
+
             Sprite loadedIcon = null;
             if (!string.IsNullOrEmpty(item.iconName))
             {
@@ -94,13 +104,17 @@ public class WeaponInventoryUI : MonoBehaviour
                 isEquipped = isSavedAsEquipped 
             });
         }
-        
-        // Spawnear espadas equipadas físicamente en el jugador
-        Invoke("LoadEquippedWeapons3D", 0.5f);
+    }
 
+    void Start()
+    {
+        ReloadInventory();
+        // Spawnear espadas equipadas físicamente en el jugador (using DataManager saved state)
+        Invoke("LoadEquippedWeapons3D", 0.5f);
+        
         weaponsPopupPanel.SetActive(false);
         weaponDetailsPanel.SetActive(false);
-
+        
         btnOpenWeapons.onClick.AddListener(() => OpenWeaponsPopup());
         btnEquip.onClick.AddListener(OnEquipClicked);
         btnSell.onClick.AddListener(OnSellClicked);
@@ -122,6 +136,7 @@ public class WeaponInventoryUI : MonoBehaviour
 
     void OpenWeaponsPopup()
     {
+        ReloadInventory(); // Ensure it's up to date when opened
         weaponsPopupPanel.SetActive(true);
         capacityText.text = $"{inventory.Count}/100";
         RefreshGrid();

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace MonsterQuest.Inventory
 {
     public enum ItemType { Currency, Material, Weapon }
-    public enum ItemRarity { Uncommon, Rare, Epic, Legendary, Mythical, Eternal, Exotic }
+    public enum ItemRarity { Uncommon, Rare, Epic, Legendary, Mythical, Eternal, Exotic, Holo, Celestial }
     public enum WeaponOrientation { Horizontal, Vertical, Diagonal }
 
     [Serializable]
@@ -33,6 +33,8 @@ namespace MonsterQuest.Inventory
     {
         public string worldId = "world_1";
         public string worldName = "New World";
+        public int normalEggPrice = 300;
+        public int vipEggPrice = 1000;
         public List<WeaponData> weapons = new List<WeaponData>();
     }
 

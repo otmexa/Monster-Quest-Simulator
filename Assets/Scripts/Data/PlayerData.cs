@@ -7,6 +7,7 @@ public class PlayerData
     public int level = 1;
     public int gold = 0;
     public int experience = 0;
+    public bool hasReceivedStarterWeapon = false;
 
     // Instancias de las sub-clases
     public PlayerSettings settings = new PlayerSettings();
