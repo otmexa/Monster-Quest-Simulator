@@ -117,25 +117,58 @@ public class PlayerCombat : NetworkBehaviour
             }
             else
             {
-                // 4 a 15 Espadas: Algoritmo de "Aura de Pavorreal" (Abanico)
+                // 4 a 15 Espadas: Algoritmo de "Capa de Espadas" (Máximo 3 filas para no tapar al personaje)
+                int[] rows;
+                switch (count) {
+                    case 4: rows = new int[] { 1, 3 }; break;
+                    case 5: rows = new int[] { 2, 3 }; break;
+                    case 6: rows = new int[] { 3, 3 }; break; // 2 filas anchas
+                    case 7: rows = new int[] { 3, 4 }; break;
+                    case 8: rows = new int[] { 4, 4 }; break;
+                    case 9: rows = new int[] { 2, 3, 4 }; break; // 3 filas compactas
+                    case 10: rows = new int[] { 3, 3, 4 }; break;
+                    case 11: rows = new int[] { 3, 4, 4 }; break;
+                    case 12: rows = new int[] { 3, 4, 5 }; break;
+                    case 13: rows = new int[] { 4, 4, 5 }; break;
+                    case 14: rows = new int[] { 4, 5, 5 }; break;
+                    case 15: rows = new int[] { 4, 5, 6 }; break; // 3 filas súper anchas
+                    default: rows = new int[] { count }; break;
+                }
                 
-                // Repartimos los ángulos uniformemente de 0 a 180 grados (arco de medio círculo)
-                float angleStep = 180f / (count - 1);
-                float angle = i * angleStep; 
-                float rad = angle * Mathf.Deg2Rad;
+                // Encontrar en qué fila le toca estar a la espada actual 'i'
+                int rowIndex = 0;
+                int swordsBefore = 0;
+                for (int r = 0; r < rows.Length; r++) {
+                    if (i < swordsBefore + rows[r]) {
+                        rowIndex = r;
+                        break;
+                    }
+                    swordsBefore += rows[r];
+                }
                 
-                // El radio del aura crece un poco mientras más espadas tengas para que quepan
-                float radius = 1.2f + (count * 0.05f);
-                float centerY = 0.5f; // Centro de la espalda
+                int indexInRow = i - swordsBefore;
+                int swordsInRow = rows[rowIndex];
                 
-                // Calcular X e Y en base a seno y coseno para formar el arco
-                float x = Mathf.Cos(rad) * radius;
-                float y = centerY + Mathf.Sin(rad) * radius;
+                // Ajustes de espaciado
+                float dx = 0.9f; // Separación horizontal un poco más amplia
+                float dy = 0.6f; // Separación vertical más compacta para que no suban tanto
                 
-                // Desfase milimétrico en Z para que no choquen/clipeen entre ellas
-                float zOffset = i * 0.02f;
+                // Calculamos la altura total para centrar la matriz
+                float totalHeight = (rows.Length - 1) * dy;
+                float startY = 1.0f + (totalHeight / 2f); // 1.0f es el centro de tu espalda
                 
-                fw.idleOffset = new Vector3(x, y, zBack - zOffset);
+                // Posición XY
+                float distanceFromCenter = (indexInRow - (swordsInRow - 1) / 2.0f);
+                float x = distanceFromCenter * dx;
+                float y = startY - (rowIndex * dy);
+                
+                // EFECTO CAPA/ALAS (Wing Effect) en Z: 
+                // Las espadas del centro están pegadas a la espalda, pero las de las orillas
+                // se van haciendo un poco hacia atrás para envolver al personaje como alas.
+                float zWingCurve = Mathf.Abs(distanceFromCenter) * 0.4f; 
+                float zRowOffset = rowIndex * 0.1f; 
+                
+                fw.idleOffset = new Vector3(x, y, zBack - zRowOffset - zWingCurve);
             }
         }
     }
