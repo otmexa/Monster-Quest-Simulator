@@ -2,6 +2,7 @@ using UnityEngine;
 using MonsterQuest.Data;
 using MonsterQuest.Inventory;
 using MonsterQuest.UI;
+using WeaponData = MonsterQuest.Inventory.WeaponData;
 
 namespace MonsterQuest.Core
 {

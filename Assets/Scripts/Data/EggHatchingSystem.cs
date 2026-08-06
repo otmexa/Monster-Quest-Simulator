@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using MonsterQuest.Inventory;
+using WeaponData = MonsterQuest.Inventory.WeaponData;
 
 namespace MonsterQuest.Data
 {
@@ -34,7 +35,7 @@ namespace MonsterQuest.Data
             { ItemRarity.Celestial, 0.005f }
         };
 
-        public static WeaponData RollWeapon(WorldData world, bool isVip)
+        public static MonsterQuest.Inventory.WeaponData RollWeapon(WorldData world, bool isVip)
         {
             if (world.weapons == null || world.weapons.Count == 0) return null;
 
@@ -57,7 +58,7 @@ namespace MonsterQuest.Data
                 }
             }
 
-            List<WeaponData> validWeapons = new List<WeaponData>();
+            List<MonsterQuest.Inventory.WeaponData> validWeapons = new List<MonsterQuest.Inventory.WeaponData>();
             foreach (var w in world.weapons)
             {
                 if (w.rarity == selectedRarity) validWeapons.Add(w);

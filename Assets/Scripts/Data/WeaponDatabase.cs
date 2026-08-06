@@ -52,10 +52,12 @@ namespace MonsterQuest.Inventory
         public List<UniverseData> universes = new List<UniverseData>();
     }
 
+    [Obsolete("Migrando a la nueva arquitectura Addressables. Usar WeaponCatalogService en su lugar.")]
     public static class WeaponDatabase
     {
         private static GameDatabaseModel _db;
 
+        [Obsolete("Usar WeaponCatalogService.TryGetWeapon en su lugar.")]
         public static GameDatabaseModel GetDatabase()
         {
             if (_db == null) Load();

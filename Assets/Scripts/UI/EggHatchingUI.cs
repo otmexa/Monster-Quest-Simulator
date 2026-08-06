@@ -19,7 +19,7 @@ namespace MonsterQuest.UI
 
         private GameObject spawnedWeapon3D;
 
-        public static void Open(WeaponData resultWeapon, bool isEgg = true)
+        public static void Open(MonsterQuest.Inventory.WeaponData resultWeapon, bool isEgg = true)
         {
             if (instance == null)
             {
@@ -124,7 +124,7 @@ namespace MonsterQuest.UI
             });
         }
 
-        private IEnumerator HatchRoutine(WeaponData resultWeapon, bool isEgg)
+        private IEnumerator HatchRoutine(MonsterQuest.Inventory.WeaponData resultWeapon, bool isEgg)
         {
             eggTextMockup.gameObject.SetActive(isEgg);
             glowImage.color = Color.clear;

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "dataVersion": 1,
+  "weapons": [
+    {
+      "weaponId": 1,
+      "localizationKey": "weapon.sword1h01_blue",
+      "damage": 10,
+      "price": 100,
+      "rarityId": "common",
+      "weaponTypeId": "sword_1h",
+      "visualKey": "weapon.visual.1",
+      "iconKey": "weapon.icon.1",
+      "requiredContentReleaseId": 1,
+      "enabled": true
+    },
+    {
+      "weaponId": 2,
+      "localizationKey": "weapon.axe1h01_red",
+      "damage": 25,
+      "price": 300,
+      "rarityId": "rare",
+      "weaponTypeId": "axe_1h",
+      "visualKey": "weapon.visual.2",
+      "iconKey": "weapon.icon.2",
+      "requiredContentReleaseId": 1,
+      "enabled": true
+    },
+    {
+      "weaponId": 3,
+      "localizationKey": "weapon.wand01_purple",
+      "damage": 40,
+      "price": 1500,
+      "rarityId": "epic",
+      "weaponTypeId": "wand",
+      "visualKey": "weapon.visual.3",
+      "iconKey": "weapon.icon.3",
+      "requiredContentReleaseId": 1,
+      "enabled": true
+    }
+  ]
+}
