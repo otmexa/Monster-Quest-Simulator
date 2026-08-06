@@ -28,7 +28,7 @@ public class WeaponInventoryUI : MonoBehaviour
     [Header("Dependencies")]
     public PlayerCombat playerCombat;
 
-    private int maxSlots = 4;
+    private int maxSlots = 15;
     private int currentEquipped = 0;
 
     // Mock data for our 3 weapons
@@ -46,10 +46,17 @@ public class WeaponInventoryUI : MonoBehaviour
 
     void Start()
     {
-        // Initialize mock inventory
-        inventory.Add(new MockWeapon { id = "w1", name = "Espada Básica", damage = 5, isEquipped = false });
-        inventory.Add(new MockWeapon { id = "w2", name = "Sable de Fuego", damage = 12, isEquipped = false });
-        inventory.Add(new MockWeapon { id = "w3", name = "Rebanador del Rey", damage = 25, isEquipped = false });
+        // Generamos 15 espadas de prueba (MockWeapons)
+        for (int i = 1; i <= 15; i++)
+        {
+            inventory.Add(new MockWeapon 
+            { 
+                id = "w" + i, 
+                name = "Espada de Prueba " + i, 
+                damage = i * 5, 
+                isEquipped = false 
+            });
+        }
 
         weaponsPopupPanel.SetActive(false);
         weaponDetailsPanel.SetActive(false);

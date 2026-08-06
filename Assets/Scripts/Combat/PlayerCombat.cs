@@ -84,37 +84,58 @@ public class PlayerCombat : NetworkBehaviour
         {
             FloatingWeapon fw = equippedWeapons[i];
             
+            // Asignamos el índice para que el menú de Debug sepa dónde dibujarse sin encimarse
+            fw.weaponIndex = i;
+            
             // Desincronizar su ángulo de órbita para que ataquen desde distintos flancos al enemigo
             // orbitTime actúa como el ángulo en radianes en la función de órbita
             fw.orbitTime = (Mathf.PI * 2f / count) * i;
             
-            // Rotación fija para que apunten hacia la izquierda (Z = 90)
-            // Y = 90 gira la espada sobre su propio eje (la hoja) para que el filo quede vertical y no plana.
+            // Rotación fija que encontramos en el Debug (horizontales, filo hacia atrás)
             fw.idleRotationOffset = new Vector3(0f, 90f, 90f);
-
-            // Regresamos a negativo (-0.6f) que es la verdadera espalda.
-            float zBack = -0.6f; 
             
-            // Apilarlas verticalmente dependiendo de cuántas haya
+            // Distancia de la espalda encontrada en el Debug
+            float zBack = -2.5f; 
+            
             if (count == 1)
             {
-                fw.idleOffset = new Vector3(0f, 1.2f, zBack);
+                // 1 Espada: Centrada en la espalda
+                fw.idleOffset = new Vector3(0f, 1.0f, zBack);
             }
             else if (count == 2)
             {
-                float y = (i == 0) ? 1.4f : 1.0f;
-                fw.idleOffset = new Vector3(0f, y, zBack - (i * 0.1f)); 
+                // 2 Espadas: Una a cada lado
+                float x = (i == 0) ? 0.6f : -0.6f;
+                fw.idleOffset = new Vector3(x, 1.0f, zBack);
             }
             else if (count == 3)
             {
-                float y = (i == 0) ? 1.6f : (i == 1) ? 1.2f : 0.8f;
-                fw.idleOffset = new Vector3(0f, y, zBack - (i * 0.1f));
+                // 3 Espadas: El Triángulo Perfecto del Usuario
+                if (i == 0) fw.idleOffset = new Vector3(0f, 1.5f, zBack);
+                else if (i == 1) fw.idleOffset = new Vector3(0.8f, 0.4f, zBack);
+                else fw.idleOffset = new Vector3(-0.8f, 0.4f, zBack);
             }
             else
             {
-                // Si equipa más de 3, las apilamos hacia arriba
-                float y = 1.2f + (i * 0.3f);
-                fw.idleOffset = new Vector3(0f, y, zBack - (i * 0.05f));
+                // 4 a 15 Espadas: Algoritmo de "Aura de Pavorreal" (Abanico)
+                
+                // Repartimos los ángulos uniformemente de 0 a 180 grados (arco de medio círculo)
+                float angleStep = 180f / (count - 1);
+                float angle = i * angleStep; 
+                float rad = angle * Mathf.Deg2Rad;
+                
+                // El radio del aura crece un poco mientras más espadas tengas para que quepan
+                float radius = 1.2f + (count * 0.05f);
+                float centerY = 0.5f; // Centro de la espalda
+                
+                // Calcular X e Y en base a seno y coseno para formar el arco
+                float x = Mathf.Cos(rad) * radius;
+                float y = centerY + Mathf.Sin(rad) * radius;
+                
+                // Desfase milimétrico en Z para que no choquen/clipeen entre ellas
+                float zOffset = i * 0.02f;
+                
+                fw.idleOffset = new Vector3(x, y, zBack - zOffset);
             }
         }
     }

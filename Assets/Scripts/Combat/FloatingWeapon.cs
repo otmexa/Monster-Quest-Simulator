@@ -16,8 +16,15 @@ public class FloatingWeapon : MonoBehaviour
     private Transform target;
     public float orbitTime = 0f;
     private float orbitTilt = 0f;
-    private float orbitDistance = 2f;
+    public float orbitDistance = 2f;
     public float orbitSpeed = 5f;
+    public int weaponIndex = 0;
+
+    [Header("--- VISUAL DEBUG ---")]
+    [Tooltip("Activa esto en PlayMode para sobreescribir la posicion y moverla a mano")]
+    public bool useDebugValues = false;
+    public Vector3 debugIdleOffset = new Vector3(0.5f, 0f, -0.9f);
+    public Vector3 debugRotationOffset = new Vector3(0f, 90f, 90f);
 
     void Start()
     {
@@ -31,7 +38,7 @@ public class FloatingWeapon : MonoBehaviour
             trail.emitting = false;
         }
 
-        // Asegurarse de que no colisionen físicamente con el jugador ni entre ellas
+        // Asegurarse de que no colisionen fisicamente con el jugador ni entre ellas
         Collider col = GetComponent<Collider>();
         if (col != null) col.isTrigger = true;
 
@@ -49,14 +56,19 @@ public class FloatingWeapon : MonoBehaviour
 
         if (currentState == WeaponState.Idle)
         {
+            Vector3 currentOffset = useDebugValues ? debugIdleOffset : idleOffset;
+            Vector3 currentRotOffset = useDebugValues ? debugRotationOffset : idleRotationOffset;
             
-            // Hover behind player
-            Vector3 targetPos = player.position + player.rotation * idleOffset;
+            Vector3 targetPos = player.position + player.rotation * currentOffset;
+            
+            // Oscilacion vertical
+            targetPos.y += Mathf.Sin(Time.time * 2f + orbitTime) * 0.1f;
             targetPos.y = Mathf.Max(targetPos.y, 0.5f); // Prevent clipping into ground
-            transform.position = Vector3.Lerp(transform.position, targetPos, followSpeed * Time.deltaTime);
+
+            transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * 5f);
             
-            Quaternion targetRot = player.rotation * Quaternion.Euler(idleRotationOffset);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, followSpeed * Time.deltaTime);
+            Quaternion targetRot = player.rotation * Quaternion.Euler(currentRotOffset);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 5f);
         }
         else if (currentState == WeaponState.Orbit)
         {
@@ -93,6 +105,19 @@ public class FloatingWeapon : MonoBehaviour
                 StopAttack();
             }
         }
+    }
+
+    void OnDrawGizmos()
+    {
+        // Dibuja los ejes locales de la espada para que veas hacia donde apunta cada cosa
+        Gizmos.color = Color.blue; // Z (Adelante)
+        Gizmos.DrawRay(transform.position, transform.forward * 1.5f);
+        
+        Gizmos.color = Color.red; // X (Derecha)
+        Gizmos.DrawRay(transform.position, transform.right * 1.5f);
+        
+        Gizmos.color = Color.green; // Y (Arriba)
+        Gizmos.DrawRay(transform.position, transform.up * 1.5f);
     }
 
     public void Orbit(Transform target)
@@ -167,4 +192,6 @@ public class FloatingWeapon : MonoBehaviour
             currentState = WeaponState.Idle;
         }
     }
+
+    // El menú OnGUI ha sido eliminado porque ya no es necesario.
 }
