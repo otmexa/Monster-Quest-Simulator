@@ -1,348 +1,351 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Threading;
+using MonsterQuest.Data;
+using MonsterQuest.Services;
 
-public class WeaponInventoryUI : MonoBehaviour
+namespace MonsterQuest.UI
 {
-    [Header("UI Panels")]
-    public GameObject leftHUDPanel;
-    public GameObject weaponsPopupPanel;
-    public GameObject weaponDetailsPanel;
-
-    [Header("Main HUD Elements")]
-    public Text equippedCountText;
-    public Button btnOpenWeapons;
-    public Text goldText; // Nuevo campo para el oro
-
-    [Header("Popup Elements")]
-    public Transform gridContainer;
-    public GameObject weaponSlotPrefab;
-    public Text capacityText;
-
-    [Header("Details Panel")]
-    public Text detailsNameText;
-    public Text detailsStatsText;
-    public Button btnEquip;
-    public Text btnEquipText;
-    public Button btnSell;
-
-    [Header("Dependencies")]
-    public PlayerCombat playerCombat;
-
-    private int maxSlots = 15;
-    private int currentEquipped = 0;
-
-    // Lista real de armas usando ItemData
-    private List<MockWeapon> inventory = new List<MockWeapon>();
-    private MockWeapon selectedWeapon = null;
-
-    private class MockWeapon
+    public class WeaponInventoryUI : MonoBehaviour
     {
-        public string id;
-        public string name;
-        public int damage;
-        public int sellValue;
-        public MonsterQuest.Inventory.ItemRarity rarity;
-        public Sprite icon;
-        public bool isEquipped;
-        public GameObject uiSlot;
-    }
+        [Header("UI Panels")]
+        public GameObject leftHUDPanel;
+        public GameObject weaponsPopupPanel;
+        public GameObject weaponDetailsPanel;
 
+        [Header("Main HUD Elements")]
+        public Text equippedCountText;
+        public Button btnOpenWeapons;
+        public Text goldText;
 
+        [Header("Popup Elements")]
+        public Transform gridContainer;
+        public GameObject weaponSlotPrefab;
+        public Text capacityText;
 
-    void ReloadInventory()
-    {
-        inventory.Clear();
-        currentEquipped = 0;
+        [Header("Details Panel")]
+        public Text detailsNameText;
+        public Text detailsStatsText;
+        public Button btnEquip;
+        public Text btnEquipText;
+        public Button btnSell;
 
-        // Find PlayerInventory
-        MonsterQuest.Inventory.PlayerInventory pInv = null;
-        if (playerCombat != null) pInv = playerCombat.GetComponent<MonsterQuest.Inventory.PlayerInventory>();
-        else 
+        [Header("Dependencies")]
+        public PlayerCombat playerCombat;
+
+        private int maxSlots = 15;
+        private int currentEquipped = 0;
+
+        private List<MockWeapon> inventory = new List<MockWeapon>();
+        private MockWeapon selectedWeapon = null;
+        private Sprite placeholderSprite;
+        private CancellationTokenSource popupCts;
+
+        private class MockWeapon
         {
-            GameObject player = GameObject.Find("NetworkedPlayer(Clone)"); 
-            if (player == null) player = GameObject.Find("NetworkedPlayer");
-            if (player != null) pInv = player.GetComponent<MonsterQuest.Inventory.PlayerInventory>();
+            public string instanceId;
+            public int weaponId;
+            public string name;
+            public int damage;
+            public int sellValue;
+            public string rarityId;
+            public string iconKey;
+            public bool isEquipped;
+            public GameObject uiSlot;
         }
 
-        var db = MonsterQuest.Inventory.WeaponDatabase.GetDatabase();
-        List<MonsterQuest.Inventory.WeaponData> allItems = new List<MonsterQuest.Inventory.WeaponData>();
-        foreach(var uni in db.universes)
+        void Start()
         {
-            foreach(var w in uni.worlds) 
-            {
-                allItems.AddRange(w.weapons);
-            }
-        }
-        
-        foreach (var item in allItems)
-        {
-            if (item.type != MonsterQuest.Inventory.ItemType.Weapon) continue;
+            placeholderSprite = Resources.Load<Sprite>("UI/WeaponPlaceholder");
+
+            ReloadInventory();
+            Invoke("LoadEquippedWeapons3D", 0.5f);
             
-            // SOLO agregar si el jugador realmente lo tiene en su inventario (o si está equipado en DataManager)
-            bool isSavedAsEquipped = DataManager.Instance != null && DataManager.Instance.Data.inventory.equippedWeapons.Contains(item.id);
-            int amountOwned = pInv != null ? pInv.GetItemCount(item.id) : 0;
-
-            if (amountOwned <= 0 && !isSavedAsEquipped) continue;
-
-            if (isSavedAsEquipped) currentEquipped++;
-
-            Sprite loadedIcon = null;
-            if (!string.IsNullOrEmpty(item.iconName))
-            {
-                loadedIcon = Resources.Load<Sprite>("Icons/" + item.iconName);
-            }
-
-            inventory.Add(new MockWeapon 
-            { 
-                id = item.id, 
-                name = item.displayName, 
-                damage = item.damage, 
-                sellValue = item.sellValue,
-                rarity = item.rarity,
-                icon = loadedIcon,
-                isEquipped = isSavedAsEquipped 
-            });
-        }
-    }
-
-    void Start()
-    {
-        ReloadInventory();
-        // Spawnear espadas equipadas físicamente en el jugador (using DataManager saved state)
-        Invoke("LoadEquippedWeapons3D", 0.5f);
-        
-        weaponsPopupPanel.SetActive(false);
-        weaponDetailsPanel.SetActive(false);
-        
-        btnOpenWeapons.onClick.AddListener(() => OpenWeaponsPopup());
-        btnEquip.onClick.AddListener(OnEquipClicked);
-        btnSell.onClick.AddListener(OnSellClicked);
-        
-        // Find player combat if not assigned
-        // Auto-hook Close button if it exists
-        if (weaponsPopupPanel != null)
-        {
-            Transform closeBtnTr = weaponsPopupPanel.transform.Find("Btn_Close");
-            if (closeBtnTr != null)
-            {
-                Button closeBtn = closeBtnTr.GetComponent<Button>();
-                if (closeBtn != null) closeBtn.onClick.AddListener(CloseWeaponsPopup);
-            }
-        }
-
-        UpdateHUD();
-    }
-
-    void OpenWeaponsPopup()
-    {
-        ReloadInventory(); // Ensure it's up to date when opened
-        weaponsPopupPanel.SetActive(true);
-        capacityText.text = $"{inventory.Count}/100";
-        RefreshGrid();
-    }
-
-    public void CloseWeaponsPopup()
-    {
-        weaponsPopupPanel.SetActive(false);
-    }
-
-    void RefreshGrid()
-    {
-        // Clear old
-        foreach (Transform child in gridContainer) Destroy(child.gameObject);
-
-        // Build new
-        foreach (var w in inventory)
-        {
-            GameObject slot = Instantiate(weaponSlotPrefab, gridContainer);
-            slot.SetActive(true); // VERY IMPORTANT: The prefab was inactive!
-            w.uiSlot = slot;
-
-            // Setup button
-            Button btn = slot.GetComponent<Button>();
-            MockWeapon capturedW = w; // capture for lambda
-            btn.onClick.AddListener(() => ShowDetails(capturedW));
-
-            // Set icon image (we add an Image child to show the weapon)
-            Image iconImg = new GameObject("Icon").AddComponent<Image>();
-            iconImg.transform.SetParent(slot.transform, false);
-            iconImg.rectTransform.anchorMin = Vector2.zero;
-            iconImg.rectTransform.anchorMax = Vector2.one;
-            iconImg.rectTransform.offsetMin = new Vector2(10, 10);
-            iconImg.rectTransform.offsetMax = new Vector2(-10, -10);
+            weaponsPopupPanel.SetActive(false);
+            weaponDetailsPanel.SetActive(false);
             
-            if (w.icon != null)
+            btnOpenWeapons.onClick.AddListener(() => OpenWeaponsPopup());
+            btnEquip.onClick.AddListener(OnEquipClicked);
+            btnSell.onClick.AddListener(OnSellClicked);
+            
+            if (weaponsPopupPanel != null)
             {
-                iconImg.sprite = w.icon;
+                Transform closeBtnTr = weaponsPopupPanel.transform.Find("Btn_Close");
+                if (closeBtnTr != null)
+                {
+                    Button closeBtn = closeBtnTr.GetComponent<Button>();
+                    if (closeBtn != null) closeBtn.onClick.AddListener(CloseWeaponsPopup);
+                }
+            }
+
+            UpdateHUD();
+        }
+
+        void ReloadInventory()
+        {
+            inventory.Clear();
+            currentEquipped = 0;
+
+            if (DataManager.Instance == null) return;
+            
+            var owned = DataManager.Instance.Data.inventory.ownedWeapons;
+            foreach (var inst in owned)
+            {
+                if (MonsterQuest.Data.WeaponCatalogService.TryGetWeapon(inst.weaponId, out WeaponData catalogData))
+                {
+                    bool isEquipped = DataManager.Instance.Data.inventory.equippedWeapons.Exists(e => e.instanceId == inst.instanceId);
+                    if (isEquipped) currentEquipped++;
+                    
+                    inventory.Add(new MockWeapon 
+                    { 
+                        instanceId = inst.instanceId,
+                        weaponId = inst.weaponId, 
+                        name = catalogData.localizationKey,
+                        damage = catalogData.damage, 
+                        sellValue = catalogData.price / 2,
+                        rarityId = catalogData.rarityId,
+                        iconKey = catalogData.iconKey,
+                        isEquipped = isEquipped 
+                    });
+                }
+            }
+        }
+
+        void OpenWeaponsPopup()
+        {
+            ReloadInventory();
+            weaponsPopupPanel.SetActive(true);
+            capacityText.text = $"{inventory.Count}/100";
+            
+            popupCts?.Cancel();
+            popupCts = new CancellationTokenSource();
+            RefreshGrid();
+        }
+
+        public void CloseWeaponsPopup()
+        {
+            popupCts?.Cancel();
+            popupCts = null;
+
+            weaponsPopupPanel.SetActive(false);
+            if (IconCacheService.Instance != null)
+            {
+                IconCacheService.Instance.ClearCache();
+            }
+        }
+
+        async void LoadIconAsync(MockWeapon w, Image iconImg, CancellationToken token)
+        {
+            if (IconCacheService.Instance == null) return;
+            
+            Sprite sprite = await IconCacheService.Instance.GetIconAsync(w.iconKey, token);
+            
+            if (token.IsCancellationRequested) return;
+
+            if (iconImg != null && sprite != null) 
+            {
+                iconImg.sprite = sprite;
                 iconImg.color = Color.white;
             }
-            else
+        }
+
+        void RefreshGrid()
+        {
+            foreach (Transform child in gridContainer) Destroy(child.gameObject);
+
+            foreach (var w in inventory)
             {
-                // Fallback color depending on rarity
-                switch(w.rarity)
+                GameObject slot = Instantiate(weaponSlotPrefab, gridContainer);
+                slot.SetActive(true); 
+                w.uiSlot = slot;
+
+                Button btn = slot.GetComponent<Button>();
+                MockWeapon capturedW = w; 
+                btn.onClick.AddListener(() => ShowDetails(capturedW));
+
+                Image iconImg = new GameObject("Icon").AddComponent<Image>();
+                iconImg.transform.SetParent(slot.transform, false);
+                iconImg.rectTransform.anchorMin = Vector2.zero;
+                iconImg.rectTransform.anchorMax = Vector2.one;
+                iconImg.rectTransform.offsetMin = new Vector2(10, 10);
+                iconImg.rectTransform.offsetMax = new Vector2(-10, -10);
+                
+                if (placeholderSprite != null)
                 {
-                    case MonsterQuest.Inventory.ItemRarity.Uncommon: iconImg.color = Color.green; break;
-                    case MonsterQuest.Inventory.ItemRarity.Rare: iconImg.color = Color.blue; break;
-                    case MonsterQuest.Inventory.ItemRarity.Epic: iconImg.color = new Color(0.5f, 0f, 0.5f); break; // Purple
-                    case MonsterQuest.Inventory.ItemRarity.Legendary: iconImg.color = new Color(1f, 0.5f, 0f); break; // Orange
-                    case MonsterQuest.Inventory.ItemRarity.Mythical: iconImg.color = Color.red; break;
-                    case MonsterQuest.Inventory.ItemRarity.Eternal: iconImg.color = Color.cyan; break;
-                    case MonsterQuest.Inventory.ItemRarity.Exotic: iconImg.color = Color.yellow; break;
-                    default: iconImg.color = new Color(0.2f, 0.6f, 0.9f); break;
+                    iconImg.sprite = placeholderSprite;
+                    iconImg.color = new Color(1f, 1f, 1f, 0.5f); 
+                }
+                else
+                {
+                    switch(w.rarityId)
+                    {
+                        case "uncommon": iconImg.color = Color.green; break;
+                        case "rare": iconImg.color = Color.blue; break;
+                        case "epic": iconImg.color = new Color(0.5f, 0f, 0.5f); break; 
+                        case "legendary": iconImg.color = new Color(1f, 0.5f, 0f); break; 
+                        default: iconImg.color = new Color(0.2f, 0.6f, 0.9f); break;
+                    }
+                }
+
+                if (popupCts != null)
+                {
+                    LoadIconAsync(w, iconImg, popupCts.Token);
+                }
+
+                Transform checkmark = slot.transform.Find("Checkmark");
+                if (checkmark != null)
+                {
+                    checkmark.SetAsLastSibling(); 
+                    checkmark.gameObject.SetActive(w.isEquipped);
                 }
             }
-
-            // Setup checkmark
-            Transform checkmark = slot.transform.Find("Checkmark");
-            if (checkmark != null)
-            {
-                checkmark.SetAsLastSibling(); // Ensure it renders on top
-                checkmark.gameObject.SetActive(w.isEquipped);
-            }
-        }
-    }
-
-    void ShowDetails(MockWeapon w)
-    {
-        selectedWeapon = w;
-        weaponDetailsPanel.SetActive(true);
-        
-        string rarityColor = "#FFFFFF";
-        switch(w.rarity)
-        {
-            case MonsterQuest.Inventory.ItemRarity.Uncommon: rarityColor = "#00FF00"; break;
-            case MonsterQuest.Inventory.ItemRarity.Rare: rarityColor = "#0080FF"; break;
-            case MonsterQuest.Inventory.ItemRarity.Epic: rarityColor = "#A335EE"; break;
-            case MonsterQuest.Inventory.ItemRarity.Legendary: rarityColor = "#FF8000"; break;
-            case MonsterQuest.Inventory.ItemRarity.Mythical: rarityColor = "#FF0040"; break; // Red
-            case MonsterQuest.Inventory.ItemRarity.Eternal: rarityColor = "#00FFFF"; break;  // Cyan
-            case MonsterQuest.Inventory.ItemRarity.Exotic: rarityColor = "#FFD700"; break;   // Gold
         }
 
-        detailsNameText.text = $"<color={rarityColor}>{w.name}</color>";
-        detailsStatsText.text = $"DAÑO {w.damage}  |  VALOR: {w.sellValue} G";
-
-        if (w.isEquipped)
+        void ShowDetails(MockWeapon w)
         {
-            btnEquipText.text = "Desequipar";
-            btnEquip.GetComponent<Image>().color = new Color(0.8f, 0.2f, 0.2f); // Red
-        }
-        else
-        {
-            btnEquipText.text = "Equipar";
-            btnEquip.GetComponent<Image>().color = new Color(0.2f, 0.8f, 0.2f); // Green
-        }
-    }
-
-    void OnEquipClicked()
-    {
-        if (selectedWeapon == null) return;
-
-        if (selectedWeapon.isEquipped)
-        {
-            // Unequip
-            selectedWeapon.isEquipped = false;
-            currentEquipped--;
-            Update3DWeapon(selectedWeapon, false);
+            selectedWeapon = w;
+            weaponDetailsPanel.SetActive(true);
             
-            // Guardar en JSON
-            if (DataManager.Instance != null)
+            string rarityColor = "#FFFFFF";
+            switch(w.rarityId)
             {
-                DataManager.Instance.Data.inventory.equippedWeapons.Remove(selectedWeapon.id);
-                DataManager.Instance.SaveData();
+                case "uncommon": rarityColor = "#00FF00"; break;
+                case "rare": rarityColor = "#0080FF"; break;
+                case "epic": rarityColor = "#A335EE"; break;
+                case "legendary": rarityColor = "#FF8000"; break;
+                case "mythical": rarityColor = "#FF0040"; break; 
             }
-        }
-        else
-        {
-            // Equip
-            if (currentEquipped >= maxSlots)
-            {
-                Debug.LogWarning("No tienes más slots disponibles!");
-                return;
-            }
-            selectedWeapon.isEquipped = true;
-            currentEquipped++;
-            Update3DWeapon(selectedWeapon, true);
-            
-            // Guardar en JSON
-            if (DataManager.Instance != null)
-            {
-                if (!DataManager.Instance.Data.inventory.equippedWeapons.Contains(selectedWeapon.id))
-                {
-                    DataManager.Instance.Data.inventory.equippedWeapons.Add(selectedWeapon.id);
-                }
-                DataManager.Instance.SaveData();
-            }
-        }
 
-        UpdateHUD();
-        RefreshGrid();
-        ShowDetails(selectedWeapon); // Refresh details button state
-    }
+            detailsNameText.text = $"<color={rarityColor}>{w.name}</color>";
+            detailsStatsText.text = $"DAÑO {w.damage}  |  VALOR: {w.sellValue} G";
 
-    void OnSellClicked()
-    {
-        if (selectedWeapon == null) return;
-        
-        if (selectedWeapon.isEquipped)
-        {
-            Debug.LogWarning("No puedes vender un arma equipada.");
-            return;
-        }
-
-        if (DataManager.Instance != null)
-        {
-            DataManager.Instance.Data.gold += selectedWeapon.sellValue;
-            DataManager.Instance.SaveData();
-        }
-
-        inventory.Remove(selectedWeapon);
-        weaponDetailsPanel.SetActive(false);
-        selectedWeapon = null;
-        
-        RefreshGrid();
-        capacityText.text = $"{inventory.Count}/100";
-        UpdateHUD(); // To update gold text
-        Debug.Log("Arma vendida");
-    }
-
-    void UpdateHUD()
-    {
-        equippedCountText.text = $"{currentEquipped}/{maxSlots}";
-        
-        if (goldText != null && DataManager.Instance != null)
-        {
-            goldText.text = $"Oro: {DataManager.Instance.Data.gold}";
-        }
-    }
-
-    void LoadEquippedWeapons3D()
-    {
-        foreach (var w in inventory)
-        {
             if (w.isEquipped)
             {
-                Update3DWeapon(w, true);
+                btnEquipText.text = "Desequipar";
+                btnEquip.GetComponent<Image>().color = new Color(0.8f, 0.2f, 0.2f); 
+            }
+            else
+            {
+                btnEquipText.text = "Equipar";
+                btnEquip.GetComponent<Image>().color = new Color(0.2f, 0.8f, 0.2f); 
             }
         }
-    }
 
-    void Update3DWeapon(MockWeapon w, bool equip)
-    {
-        if (playerCombat == null)
+        void OnEquipClicked()
         {
-            GameObject player = GameObject.Find("NetworkedPlayer(Clone)"); 
-            if (player == null) player = GameObject.Find("NetworkedPlayer");
-            if (player != null) playerCombat = player.GetComponent<PlayerCombat>();
+            if (selectedWeapon == null) return;
+
+            if (selectedWeapon.isEquipped)
+            {
+                selectedWeapon.isEquipped = false;
+                currentEquipped--;
+                Update3DWeapon(selectedWeapon, false);
+                
+                if (DataManager.Instance != null)
+                {
+                    DataManager.Instance.Data.inventory.equippedWeapons.RemoveAll(e => e.instanceId == selectedWeapon.instanceId);
+                    DataManager.Instance.SaveData();
+                }
+            }
+            else
+            {
+                if (currentEquipped >= maxSlots)
+                {
+                    Debug.LogWarning("No tienes más slots disponibles!");
+                    return;
+                }
+                selectedWeapon.isEquipped = true;
+                currentEquipped++;
+                Update3DWeapon(selectedWeapon, true);
+                
+                if (DataManager.Instance != null)
+                {
+                    if (!DataManager.Instance.Data.inventory.equippedWeapons.Exists(e => e.instanceId == selectedWeapon.instanceId))
+                    {
+                        int nextSlot = DataManager.Instance.Data.inventory.equippedWeapons.Count;
+                        DataManager.Instance.Data.inventory.equippedWeapons.Add(new EquippedWeaponSlotData { slotIndex = nextSlot, instanceId = selectedWeapon.instanceId });
+                    }
+                    DataManager.Instance.SaveData();
+                }
+            }
+
+            UpdateHUD();
+            
+            popupCts?.Cancel();
+            popupCts = new CancellationTokenSource();
+            RefreshGrid();
+            
+            ShowDetails(selectedWeapon); 
         }
 
-        if (playerCombat != null)
+        void OnSellClicked()
         {
-            if (equip)
-                playerCombat.EquipVisualWeapon(w.id);
-            else
-                playerCombat.UnequipVisualWeapon(w.id);
+            if (selectedWeapon == null) return;
+            
+            if (selectedWeapon.isEquipped)
+            {
+                Debug.LogWarning("No puedes vender un arma equipada.");
+                return;
+            }
+
+            if (DataManager.Instance != null)
+            {
+                DataManager.Instance.Data.gold += selectedWeapon.sellValue;
+                DataManager.Instance.Data.inventory.ownedWeapons.RemoveAll(w => w.instanceId == selectedWeapon.instanceId);
+                DataManager.Instance.SaveData();
+            }
+
+            inventory.Remove(selectedWeapon);
+            weaponDetailsPanel.SetActive(false);
+            selectedWeapon = null;
+            
+            popupCts?.Cancel();
+            popupCts = new CancellationTokenSource();
+            RefreshGrid();
+            
+            capacityText.text = $"{inventory.Count}/100";
+            UpdateHUD(); 
+            Debug.Log("Arma vendida");
+        }
+
+        void UpdateHUD()
+        {
+            equippedCountText.text = $"{currentEquipped}/{maxSlots}";
+            
+            if (goldText != null && DataManager.Instance != null)
+            {
+                goldText.text = $"Oro: {DataManager.Instance.Data.gold}";
+            }
+        }
+
+        void LoadEquippedWeapons3D()
+        {
+            foreach (var w in inventory)
+            {
+                if (w.isEquipped)
+                {
+                    Update3DWeapon(w, true);
+                }
+            }
+        }
+
+        void Update3DWeapon(MockWeapon w, bool equip)
+        {
+            if (playerCombat == null)
+            {
+                GameObject player = GameObject.Find("NetworkedPlayer(Clone)"); 
+                if (player == null) player = GameObject.Find("NetworkedPlayer");
+                if (player != null) playerCombat = player.GetComponent<PlayerCombat>();
+            }
+
+            if (playerCombat != null)
+            {
+                if (equip)
+                    playerCombat.EquipVisualWeapon(w.instanceId); 
+                else
+                    playerCombat.UnequipVisualWeapon(w.instanceId);
+            }
         }
     }
 }

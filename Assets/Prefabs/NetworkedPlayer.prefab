@@ -20,6 +20,8 @@ GameObject:
   - component: {fileID: 621482651609179109}
   - component: {fileID: 1930249758755237004}
   - component: {fileID: 4501182187833912825}
+  - component: {fileID: 4889113580343580853}
+  - component: {fileID: 5040612305217982578}
   m_Layer: 0
   m_Name: NetworkedPlayer
   m_TagString: Player
@@ -225,9 +227,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
   ShowTopMostFoldoutHeaderGroup: 1
-  attackRange: 8
-  attackSpeed: 2
-  equippedWeapons: []
+  globalDetectionRange: 10
 --- !u!114 &621482651609179109
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -291,6 +291,31 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   scanRate: 0.2
+--- !u!114 &4889113580343580853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1980316446354178251}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b633bf694b18516488f3a9ade80cc3e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterQuest.Combat.WeaponOrbitVisualController
+  orbitSpeed: 5
+--- !u!114 &5040612305217982578
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1980316446354178251}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d04394cfa6186b4ba43bccaea85eb23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterQuest.Combat.WeaponCompanionManager
 --- !u!1 &6047302456312787096
 GameObject:
   m_ObjectHideFlags: 0
@@ -609,18 +634,16 @@ MonoBehaviour:
   orbitSpeed: 5
   weaponIndex: 0
   itemData:
-    id: new_weapon
-    displayName: New Weapon
-    description: 
-    type: 2
-    rarity: 0
-    orientation: 0
-    customRotationOffset: {x: 0, y: 0, z: 0}
+    weaponId: 0
+    localizationKey: 
     damage: 5
-    sellValue: 10
-    buyValue: 50
-    iconName: 
-    prefabName: 
+    price: 0
+    rarityId: 
+    weaponTypeId: 
+    visualKey: 
+    iconKey: 
+    requiredContentReleaseId: 0
+    enabled: 1
   trailPrefab: {fileID: 3791137138755721132, guid: e21c3927d74ac1c4b8c1bee8a52c642f, type: 3}
   trailOffset: {x: 0, y: -0.1, z: 0}
   useDebugValues: 0

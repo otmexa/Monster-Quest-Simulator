@@ -48,7 +48,7 @@ namespace MonsterQuest.Services
             DontDestroyOnLoad(gameObject);
         }
 
-        public async Task<Sprite> GetIconAsync(string iconKey)
+        public async Task<Sprite> GetIconAsync(string iconKey, System.Threading.CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(iconKey)) return null;
 
@@ -62,7 +62,9 @@ namespace MonsterQuest.Services
             // 2. ¿Ya se está cargando? (Evita cargas duplicadas simultáneas)
             if (ongoingLoads.TryGetValue(iconKey, out Task<Sprite> loadTask))
             {
-                return await loadTask;
+                Sprite s = await loadTask;
+                if (cancellationToken.IsCancellationRequested) return null;
+                return s;
             }
 
             // 3. Iniciar nueva carga
@@ -91,6 +93,8 @@ namespace MonsterQuest.Services
 
                     tcs.SetResult(loadedSprite);
                     ongoingLoads.Remove(iconKey);
+                    
+                    if (cancellationToken.IsCancellationRequested) return null;
                     return loadedSprite;
                 }
                 else

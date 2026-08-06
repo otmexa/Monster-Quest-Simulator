@@ -6,7 +6,7 @@ namespace MonsterQuest.Inventory
     public class PickupItem : NetworkBehaviour
     {
         [Header("Data")]
-        public WeaponData itemData;
+        public int weaponId;
         public int amount = 1;
 
         [Header("Flight Settings")]
@@ -96,9 +96,15 @@ namespace MonsterQuest.Inventory
         {
             if (!IsServer) return;
 
-            if (inventory != null && itemData != null)
+            if (inventory != null)
             {
-                inventory.AddItem(itemData, amount);
+                if (MonsterQuest.Data.WeaponCatalogService.TryGetWeapon(weaponId, out var data))
+                {
+                    for (int i = 0; i < amount; i++)
+                    {
+                        inventory.AddWeapon(data);
+                    }
+                }
             }
 
             // Spawn VFX via ClientRpc so everyone sees it

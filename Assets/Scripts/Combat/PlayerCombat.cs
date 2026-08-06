@@ -1,33 +1,28 @@
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem;
-using System.Collections.Generic;
 using Unity.Netcode;
+using MonsterQuest.Combat;
 
+[RequireComponent(typeof(WeaponCompanionManager))]
 public class PlayerCombat : NetworkBehaviour
 {
-    public float attackRange = 8.0f;
-    public float attackSpeed = 2.0f;
-    
-    // Lista de espadas equipadas (hasta 10 slots lógicos)
-    public List<FloatingWeapon> equippedWeapons = new List<FloatingWeapon>();
-    private Dictionary<string, FloatingWeapon> weaponMap = new Dictionary<string, FloatingWeapon>();
-    
-    // Referencia a la espada original para clonarla
-    private GameObject baseSwordPrefab;
+    public float globalDetectionRange = 10.0f;
     
     private Transform currentTarget;
     private Transform queuedTarget;
     private TargetVisuals targetVisuals;
     private NavMeshAgent agent;
 
-    private float lastAttackTime = 0f;
     private UnityEngine.Rendering.Universal.DecalProjector rangeProjector;
+    
+    private WeaponCompanionManager companionManager;
 
     void Start()
     {
         targetVisuals = GetComponent<TargetVisuals>();
         agent = GetComponent<NavMeshAgent>();
+        companionManager = GetComponent<WeaponCompanionManager>();
 
         Transform rangeCircle = transform.Find("PlayerRangeCircle");
         if (rangeCircle != null)
@@ -35,169 +30,27 @@ public class PlayerCombat : NetworkBehaviour
             rangeProjector = rangeCircle.GetComponent<UnityEngine.Rendering.Universal.DecalProjector>();
         }
         
-        // Guardamos el prefab original para clonarlo y lo ocultamos
+        // Escondemos la base
         Transform sword = transform.Find("Sword");
         if (sword != null)
         {
-            baseSwordPrefab = sword.gameObject;
-            baseSwordPrefab.SetActive(false); // Escondemos la base
+            sword.gameObject.SetActive(false); 
         }
     }
 
-    public void EquipVisualWeapon(string id)
+    public void EquipVisualWeapon(string instanceId)
     {
-        MonsterQuest.Inventory.WeaponData data = MonsterQuest.Inventory.WeaponDatabase.GetWeapon(id);
-        if (data == null) return;
-        
-        GameObject prefabToUse = baseSwordPrefab;
-        if (!string.IsNullOrEmpty(data.prefabName))
+        if (companionManager != null)
         {
-            GameObject loadedPrefab = Resources.Load<GameObject>("Prefabs/" + data.prefabName);
-            if (loadedPrefab != null) prefabToUse = loadedPrefab;
-        }
-
-        if (prefabToUse == null) return;
-
-        GameObject newSword = Instantiate(prefabToUse, transform.position, transform.rotation);
-        newSword.name = "Sword_" + id;
-        newSword.SetActive(true);
-        newSword.transform.SetParent(transform);
-
-        FloatingWeapon fw = newSword.GetComponent<FloatingWeapon>();
-        if (fw == null) fw = newSword.AddComponent<FloatingWeapon>(); // Añadir script si el prefab custom no lo trae
-        
-        fw.player = transform;
-        fw.itemData = data;
-        
-        equippedWeapons.Add(fw);
-        weaponMap[id] = fw;
-
-        RealignWeapons();
-    }
-
-    public void UnequipVisualWeapon(string id)
-    {
-        if (weaponMap.ContainsKey(id))
-        {
-            FloatingWeapon fw = weaponMap[id];
-            equippedWeapons.Remove(fw);
-            weaponMap.Remove(id);
-            if (fw != null) Destroy(fw.gameObject);
-
-            RealignWeapons();
+            companionManager.EquipCompanion(instanceId);
         }
     }
 
-    private void RealignWeapons()
+    public void UnequipVisualWeapon(string instanceId)
     {
-        int count = equippedWeapons.Count;
-        for (int i = 0; i < count; i++)
+        if (companionManager != null)
         {
-            FloatingWeapon fw = equippedWeapons[i];
-            
-            // Asignamos el índice para que el menú de Debug sepa dónde dibujarse sin encimarse
-            fw.weaponIndex = i;
-            
-            // Desincronizar su ángulo de órbita para que ataquen desde distintos flancos al enemigo
-            // orbitTime actúa como el ángulo en radianes en la función de órbita
-            fw.orbitTime = (Mathf.PI * 2f / count) * i;
-            
-            // Rotación dependiendo del ScriptableObject (ItemData)
-            if (fw.itemData != null && fw.itemData.orientation == MonsterQuest.Inventory.WeaponOrientation.Vertical)
-            {
-                fw.idleRotationOffset = new Vector3(0f, 90f, 90f); // Vertical
-            }
-            else if (fw.itemData != null && fw.itemData.orientation == MonsterQuest.Inventory.WeaponOrientation.Diagonal)
-            {
-                fw.idleRotationOffset = new Vector3(45f, 45f, 90f); // Diagonal
-            }
-            else
-            {
-                fw.idleRotationOffset = new Vector3(90f, 0f, 0f); // Horizontal
-            }
-
-            // Aplicar el ajuste de rotación fina (Custom Rotation Offset)
-            if (fw.itemData != null)
-            {
-                fw.idleRotationOffset += fw.itemData.customRotationOffset;
-            }
-            
-            // Distancia de la espalda encontrada en el Debug
-            float zBack = -2.5f; 
-            
-            if (count == 1)
-            {
-                // 1 Espada: Centrada en la espalda
-                fw.idleOffset = new Vector3(0f, 1.0f, zBack);
-            }
-            else if (count == 2)
-            {
-                // 2 Espadas: Una a cada lado
-                float x = (i == 0) ? 0.6f : -0.6f;
-                fw.idleOffset = new Vector3(x, 1.0f, zBack);
-            }
-            else if (count == 3)
-            {
-                // 3 Espadas: El Triángulo Perfecto del Usuario
-                if (i == 0) fw.idleOffset = new Vector3(0f, 1.5f, zBack);
-                else if (i == 1) fw.idleOffset = new Vector3(0.8f, 0.4f, zBack);
-                else fw.idleOffset = new Vector3(-0.8f, 0.4f, zBack);
-            }
-            else
-            {
-                // 4 a 15 Espadas: Algoritmo de "Capa de Espadas" (Máximo 3 filas para no tapar al personaje)
-                int[] rows;
-                switch (count) {
-                    case 4: rows = new int[] { 1, 3 }; break;
-                    case 5: rows = new int[] { 2, 3 }; break;
-                    case 6: rows = new int[] { 3, 3 }; break; // 2 filas anchas
-                    case 7: rows = new int[] { 3, 4 }; break;
-                    case 8: rows = new int[] { 4, 4 }; break;
-                    case 9: rows = new int[] { 2, 3, 4 }; break; // 3 filas compactas
-                    case 10: rows = new int[] { 3, 3, 4 }; break;
-                    case 11: rows = new int[] { 3, 4, 4 }; break;
-                    case 12: rows = new int[] { 3, 4, 5 }; break;
-                    case 13: rows = new int[] { 4, 4, 5 }; break;
-                    case 14: rows = new int[] { 4, 5, 5 }; break;
-                    case 15: rows = new int[] { 4, 5, 6 }; break; // 3 filas súper anchas
-                    default: rows = new int[] { count }; break;
-                }
-                
-                // Encontrar en qué fila le toca estar a la espada actual 'i'
-                int rowIndex = 0;
-                int swordsBefore = 0;
-                for (int r = 0; r < rows.Length; r++) {
-                    if (i < swordsBefore + rows[r]) {
-                        rowIndex = r;
-                        break;
-                    }
-                    swordsBefore += rows[r];
-                }
-                
-                int indexInRow = i - swordsBefore;
-                int swordsInRow = rows[rowIndex];
-                
-                // Ajustes de espaciado
-                float dx = 0.9f; // Separación horizontal un poco más amplia
-                float dy = 0.6f; // Separación vertical más compacta para que no suban tanto
-                
-                // Calculamos la altura total para centrar la matriz
-                float totalHeight = (rows.Length - 1) * dy;
-                float startY = 1.0f + (totalHeight / 2f); // 1.0f es el centro de tu espalda
-                
-                // Posición XY
-                float distanceFromCenter = (indexInRow - (swordsInRow - 1) / 2.0f);
-                float x = distanceFromCenter * dx;
-                float y = startY - (rowIndex * dy);
-                
-                // EFECTO CAPA/ALAS (Wing Effect) en Z: 
-                // Las espadas del centro están pegadas a la espalda, pero las de las orillas
-                // se van haciendo un poco hacia atrás para envolver al personaje como alas.
-                float zWingCurve = Mathf.Abs(distanceFromCenter) * 0.4f; 
-                float zRowOffset = rowIndex * 0.1f; 
-                
-                fw.idleOffset = new Vector3(x, y, zBack - zRowOffset - zWingCurve);
-            }
+            companionManager.UnequipCompanion(instanceId);
         }
     }
 
@@ -224,7 +77,7 @@ public class PlayerCombat : NetworkBehaviour
             if (e == null) continue;
             
             float distance = Vector3.Distance(transform.position, e.transform.position);
-            e.SetInRange(distance <= attackRange + 0.5f);
+            e.SetInRange(distance <= globalDetectionRange);
         }
     }
 
@@ -233,7 +86,7 @@ public class PlayerCombat : NetworkBehaviour
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
             if (UnityEngine.EventSystems.EventSystem.current != null && 
-UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+                UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
                 return;
                 
             Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
@@ -248,38 +101,33 @@ UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
 
                     if (currentTarget == null)
                     {
-                        // No target yet, make it primary
                         currentTarget = hitT;
                         clickedEnemy.isTargeted = true;
                         if (targetVisuals != null) targetVisuals.SelectPrimaryTarget(currentTarget);
                     }
                     else if (currentTarget == hitT)
                     {
-                        // Clicked primary again -> Cancel primary and promote queued
                         clickedEnemy.isTargeted = false;
                         currentTarget = null;
                         if (targetVisuals != null) targetVisuals.ClearPrimaryTarget();
-                        StopWeaponOrbit();
                         
                         PromoteQueue();
                     }
                     else if (queuedTarget == hitT)
                     {
-                        // Clicked queued again -> Cancel queued
                         clickedEnemy.isTargeted = false;
                         queuedTarget = null;
                         if (targetVisuals != null) targetVisuals.ClearQueuedTarget();
                     }
                     else
                     {
-                        // Clicked a new target -> Queue it
                         if (queuedTarget != null)
                         {
                             Enemy prevQ = queuedTarget.GetComponent<Enemy>();
                             if (prevQ != null) prevQ.isTargeted = false;
                         }
                         queuedTarget = hitT;
-                        clickedEnemy.isTargeted = true; // Use targeted state for queue as well so hover icon disappears
+                        clickedEnemy.isTargeted = true; 
                         if (targetVisuals != null) targetVisuals.SelectQueuedTarget(queuedTarget);
                     }
                 }
@@ -302,7 +150,6 @@ UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
         else
         {
             currentTarget = null;
-            StopWeaponOrbit();
             if (targetVisuals != null) targetVisuals.ClearAll();
         }
     }
@@ -331,77 +178,27 @@ UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
             }
         }
 
-        if (currentTarget == null)
+        // 2. Propagate Target to Companions
+        if (companionManager != null)
         {
-            StopWeaponOrbit();
-            return;
-        }
-
-        // 2. Perform attack if in range
-        float distance = Vector3.Distance(transform.position, currentTarget.position);
-        if (distance <= attackRange + 0.5f)
-        {
-            Vector3 direction = (currentTarget.position - transform.position).normalized;
-            direction.y = 0;
-            if (direction.magnitude > 0.1f)
+            if (currentTarget != null)
             {
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), 10f * Time.deltaTime);
-            }
-
-            foreach (var weapon in equippedWeapons)
-            {
-                if (weapon != null) weapon.Orbit(currentTarget);
-            }
-
-            if (Time.time >= lastAttackTime + attackSpeed)
-            {
-                Attack();
+                float distance = Vector3.Distance(transform.position, currentTarget.position);
                 
-                Enemy e = currentTarget.GetComponent<Enemy>();
-                if (e != null)
+                // Rotar jugador hacia el enemigo si hay target
+                Vector3 direction = (currentTarget.position - transform.position).normalized;
+                direction.y = 0;
+                if (direction.magnitude > 0.1f && distance <= globalDetectionRange)
                 {
-                    int totalDamage = 0;
-                    foreach (var fw in equippedWeapons)
-                    {
-                        if (fw != null && fw.itemData != null)
-                        {
-                            totalDamage += fw.itemData.damage;
-                        }
-                    }
-                    
-                    if (totalDamage == 0) totalDamage = 5; // Daño base si no hay armas
-                    
-                    e.TakeDamage(totalDamage); 
+                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), 10f * Time.deltaTime);
                 }
 
-                lastAttackTime = Time.time;
+                companionManager.SetTarget(currentTarget);
             }
-        }
-        else
-        {
-            StopWeaponOrbit();
-            // Out of range -> lose primary target. Promote queue? Optional. Let's just lose it.
-            Enemy e = currentTarget.GetComponent<Enemy>();
-            if (e != null) e.isTargeted = false;
-            
-            PromoteQueue(); // Let's promote queue if we lose primary due to range
-        }
-    }
-
-    void Attack()
-    {
-        // Simple combo stagger: attack with all weapons
-        foreach (var weapon in equippedWeapons)
-        {
-            if (weapon != null) weapon.PerformStrike();
-        }
-    }
-
-    void StopWeaponOrbit()
-    {
-        foreach (var weapon in equippedWeapons)
-        {
-            if (weapon != null) weapon.StopAttack();
+            else
+            {
+                companionManager.ClearTarget();
+            }
         }
     }
 }

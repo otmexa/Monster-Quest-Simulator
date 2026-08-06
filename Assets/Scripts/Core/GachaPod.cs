@@ -85,7 +85,8 @@ namespace MonsterQuest.Core
                 if (player != null)
                 {
                     var pInv = player.GetComponent<MonsterQuest.Inventory.PlayerInventory>();
-                    if (pInv != null && pInv.IsOwner) pInv.AddItem(result, 1);
+                    // TODO (Fase 5): Migrar GachaPod para usar el nuevo WeaponCatalogService
+                    // if (pInv != null && pInv.IsOwner) pInv.AddItem(result, 1);
                 }
             }
         }

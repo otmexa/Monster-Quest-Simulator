@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.UI;
+using MonsterQuest.UI;
 
 public class FixWeaponUI : EditorWindow
 {

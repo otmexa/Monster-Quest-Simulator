@@ -11,31 +11,39 @@ namespace MonsterQuest.Tests
 {
     public class TestWeaponVisuals : MonoBehaviour
     {
-        private WeaponVisualService visualService;
+        private GameObject spawnedWeapon;
 
         void Start()
         {
-            visualService = GetComponent<WeaponVisualService>();
-            
             // Simular carga de catálogo
             var source = new MonsterQuest.Data.LocalWeaponCatalogSource();
             _ = MonsterQuest.Data.WeaponCatalogService.LoadCatalogAsync(source, 1);
         }
 
-        void Update()
+        async void Update()
         {
             if (Keyboard.current != null)
             {
                 if (Keyboard.current.spaceKey.wasPressedThisFrame)
                 {
                     Debug.Log("[TestWeaponVisuals] ¡Apretaste ESPACIO! Equipando Espada...");
-                    visualService.EquipWeapon("weapon.visual.1");
+                    if (spawnedWeapon != null)
+                    {
+                        WeaponAssetService.Instance.ReleaseWeaponInstance("weapon.visual.1", spawnedWeapon);
+                        spawnedWeapon = null;
+                    }
+                    
+                    spawnedWeapon = await WeaponAssetService.Instance.InstantiateWeaponAsync("weapon.visual.1", transform);
                 }
                 
                 if (Keyboard.current.rKey.wasPressedThisFrame)
                 {
                     Debug.Log("[TestWeaponVisuals] ¡Apretaste R! Desequipando y limpiando RAM...");
-                    visualService.Unequip();
+                    if (spawnedWeapon != null)
+                    {
+                        WeaponAssetService.Instance.ReleaseWeaponInstance("weapon.visual.1", spawnedWeapon);
+                        spawnedWeapon = null;
+                    }
                 }
             }
         }
@@ -55,20 +63,14 @@ namespace MonsterQuest.Tests
             Camera.main.transform.position = new Vector3(0, 2, -5);
             Camera.main.transform.LookAt(cube.transform);
 
-            // 3. Añadir servicios
-            var visualSvc = cube.AddComponent<WeaponVisualService>();
+            // 3. Añadir servicio de test
             cube.AddComponent<TestWeaponVisuals>();
-
-            // Configurar handBone
-            var serializedObject = new SerializedObject(visualSvc);
-            var handProp = serializedObject.FindProperty("handBone");
-            handProp.objectReferenceValue = cube.transform;
-            serializedObject.ApplyModifiedProperties();
-
-            // 4. Iniciar Play Mode automáticamente
-            EditorApplication.EnterPlaymode();
             
-            Debug.Log("¡Escena de prueba creada y ejecutando Play Mode! APRIETA LA BARRA ESPACIADORA PARA EQUIPAR LA ESPADA.");
+            // Instanciar WeaponAssetService implícitamente
+            _ = WeaponAssetService.Instance;
+
+            // 4. Iniciar Play Mode
+            EditorApplication.EnterPlaymode();
         }
 #endif
     }

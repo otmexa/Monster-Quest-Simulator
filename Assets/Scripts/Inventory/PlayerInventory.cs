@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
-using MonsterQuest.UI; // <-- AGREGADO
+using MonsterQuest.UI;
+using MonsterQuest.Data;
 
 namespace MonsterQuest.Inventory
 {
@@ -16,13 +17,10 @@ namespace MonsterQuest.Inventory
         public NetworkVariable<int> experienceAmount = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<int> currentLevel = new NetworkVariable<int>(1, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-        private Dictionary<string, int> itemInventory = new Dictionary<string, int>();
-
         public event Action<int> OnGoldChanged;
         public event Action<int> OnSoulsChanged;
         public event Action<int> OnExpChanged;
         public event Action<int> OnLevelChanged;
-        public event Action<WeaponData, int> OnItemAdded;
 
         public override void OnNetworkSpawn()
         {
@@ -64,7 +62,6 @@ namespace MonsterQuest.Inventory
             currentLevel.OnValueChanged -= (oldVal, newVal) => OnLevelChanged?.Invoke(newVal);
         }
 
-        // Only the Server should call this
         public void AddGold(int amount)
         {
             if (!IsServer) return;
@@ -91,54 +88,71 @@ namespace MonsterQuest.Inventory
 
         public int GetExpRequiredForLevel(int level)
         {
-            return 100 * level; // Escala base, se puede ajustar después
+            return 100 * level; 
         }
 
-        // Only the Server should call this
-        public void AddItem(WeaponData itemData, int amount = 1)
+        // --- NEW WEAPON COMPANION ARCHITECTURE ---
+
+        public void AddWeapon(MonsterQuest.Data.WeaponData itemData, int level = 1, int enhancement = 0, int durability = 100)
         {
             if (!IsServer) return;
             if (itemData == null) return;
+            
+            // Generate unique GUID for this specific weapon instance
+            string newInstanceId = Guid.NewGuid().ToString();
 
-            if (itemData.type == ItemType.Currency)
+            // Create instance data
+            var instance = new WeaponInstanceData
             {
-                if (itemData.id.ToLower() == "gold" || itemData.id.ToLower() == "coin")
-                {
-                    AddGold(amount);
-                    return;
-                }
+                instanceId = newInstanceId,
+                weaponId = itemData.weaponId,
+                level = level,
+                enhancement = enhancement,
+                durability = durability,
+                enchantmentIds = new string[0]
+            };
+
+            // Save to DataManager (Server/Host)
+            if (DataManager.Instance != null)
+            {
+                DataManager.Instance.Data.inventory.ownedWeapons.Add(instance);
+                DataManager.Instance.SaveData();
             }
 
-            if (itemInventory.ContainsKey(itemData.id))
-            {
-                itemInventory[itemData.id] += amount;
-            }
-            else
-            {
-                itemInventory.Add(itemData.id, amount);
-            }
-
-            // Tell the client that actually owns this player to update its UI
-            UpdateClientInventoryRpc(itemData.id, itemInventory[itemData.id]);
-            Debug.Log($"[Server] {gameObject.name} Collected {amount}x {itemData.displayName}. Total: {itemInventory[itemData.id]}");
+            // Sync to clients
+            AddWeaponClientRpc(newInstanceId, itemData.weaponId, level, enhancement, durability);
+            
+            Debug.Log($"[Server] {gameObject.name} Collected new weapon instance: {newInstanceId} (Type: {itemData.weaponId})");
         }
 
         [Rpc(SendTo.ClientsAndHost)]
-        private void UpdateClientInventoryRpc(string itemID, int newTotalAmount)
+        private void AddWeaponClientRpc(string instanceId, int weaponId, int level, int enhancement, int durability)
         {
-            // Only update UI if this is our local player
             if (!IsOwner) return;
 
-            // In a real scenario, we'd look up the ItemData from a database using the itemID
-            // For now, we just invoke an update if we have a reference. 
-            // The UI will likely need a more robust ItemDatabase system later.
+            // En un cliente puro sin DataManager de Host, esto serviría para actualizar la UI visualmente.
+            // Actualmente en el prototipo, DataManager centraliza el Host, así que UI lee directo de ahí.
         }
 
-        public int GetItemCount(string itemID)
+        public WeaponInstanceData GetWeapon(string instanceId)
         {
-            if (itemInventory.TryGetValue(itemID, out int amount))
+            if (DataManager.Instance != null)
             {
-                return amount;
+                return DataManager.Instance.Data.inventory.ownedWeapons.Find(w => w.instanceId == instanceId);
+            }
+            return null;
+        }
+
+        public int GetWeaponCount(int weaponId)
+        {
+            if (DataManager.Instance != null)
+            {
+                int count = 0;
+                foreach (var w in DataManager.Instance.Data.inventory.ownedWeapons)
+                {
+                    if (w.weaponId == weaponId) count++;
+                }
+                return count;
             }
             return 0;
         }

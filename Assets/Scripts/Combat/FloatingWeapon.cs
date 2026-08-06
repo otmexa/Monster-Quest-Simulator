@@ -19,7 +19,7 @@ public class FloatingWeapon : MonoBehaviour
     public float orbitDistance = 2f;
     public float orbitSpeed = 5f;
     public int weaponIndex = 0;
-    public MonsterQuest.Inventory.WeaponData itemData;
+    public MonsterQuest.Data.WeaponData itemData;
 
     [Header("--- TRAIL ---")]
     [Tooltip("Arrastra aquí el PREFAB de tu estela (así puedes editar los colores y tamaño visualmente en Unity)")]

@@ -1,17 +1,24 @@
 using System;
 using System.Collections.Generic;
+using MonsterQuest.Data;
+
+[Serializable]
+public sealed class EquippedWeaponSlotData
+{
+    public int slotIndex;
+    public string instanceId;
+}
 
 [Serializable]
 public class PlayerInventoryData
 {
-    // Lista de IDs de los objetos que el jugador tiene en su inventario general
-    public List<string> ownedItems = new List<string>();
+    // Lista real de instancias de armas que el jugador posee
+    public List<WeaponInstanceData> ownedWeapons = new List<WeaponInstanceData>();
 
-    // Equipamiento actual (Múltiples espadas al mismo tiempo)
-    public List<string> equippedWeapons = new List<string>();
+    // Equipamiento actual, preservando el orden
+    public List<EquippedWeaponSlotData> equippedWeapons = new List<EquippedWeaponSlotData>();
     
     public string equippedArmorId = "";
     
-    // Si tienes mascotas u otros equipables, se pueden agregar aquí
     public string equippedPetId = "";
 }

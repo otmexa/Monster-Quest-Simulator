@@ -1,9 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using MonsterQuest.Inventory;
-using MonsterQuest.Data;
-using System.Collections;
-using WeaponData = MonsterQuest.Inventory.WeaponData;
+using MonsterQuest.Data; // Ya no usa el WeaponData de Inventory
+using MonsterQuest.Services;
 
 namespace MonsterQuest.UI
 {
@@ -16,15 +15,15 @@ namespace MonsterQuest.UI
         private Button btnAxe;
         private Button btnConfirm;
 
-        private string selectedWeaponId = "";
+        private int selectedWeaponId = -1;
         
         private Color defaultColor = Color.white;
         private Color selectedColor = new Color(0.2f, 0.6f, 1.0f); // Blue
         private Color confirmDisabledColor = Color.gray;
         private Color confirmEnabledColor = Color.green;
 
-        private string weaponIceId = "uni_1_w1_w1"; 
-        private string weaponFireId = "uni_1_w1_w2";
+        private int weaponSwordId = 1; 
+        private int weaponAxeId = 2;
 
         public static void Open()
         {
@@ -77,12 +76,12 @@ namespace MonsterQuest.UI
             titleTxt.rectTransform.sizeDelta = new Vector2(1200, 100);
 
             // Ice Button
-            btnSword = CreateWeaponButton(selectionPanel.transform, "BtnIce", "❄️ Espada de Hielo", new Vector2(-300, 50), font);
-            btnSword.onClick.AddListener(() => SelectWeapon(weaponIceId, btnSword));
+            btnSword = CreateWeaponButton(selectionPanel.transform, "BtnSword", "❄️ Espada de Hielo", new Vector2(-300, 50), font);
+            btnSword.onClick.AddListener(() => SelectWeapon(weaponSwordId, btnSword));
 
             // Fire Button
-            btnAxe = CreateWeaponButton(selectionPanel.transform, "BtnFire", "🔥 Hacha de Fuego", new Vector2(300, 50), font);
-            btnAxe.onClick.AddListener(() => SelectWeapon(weaponFireId, btnAxe));
+            btnAxe = CreateWeaponButton(selectionPanel.transform, "BtnAxe", "🔥 Hacha de Fuego", new Vector2(300, 50), font);
+            btnAxe.onClick.AddListener(() => SelectWeapon(weaponAxeId, btnAxe));
 
             // Confirm Button
             GameObject cBtnObj = new GameObject("BtnConfirm");
@@ -134,7 +133,7 @@ namespace MonsterQuest.UI
             return btn;
         }
 
-        private void SelectWeapon(string weaponId, Button clickedBtn)
+        private void SelectWeapon(int weaponId, Button clickedBtn)
         {
             selectedWeaponId = weaponId;
             btnSword.GetComponent<Image>().color = defaultColor;
@@ -146,12 +145,12 @@ namespace MonsterQuest.UI
 
         private void ConfirmSelection()
         {
-            if (string.IsNullOrEmpty(selectedWeaponId)) return;
+            if (selectedWeaponId == -1) return;
             
             selectionPanel.SetActive(false);
             Time.timeScale = 1f;
 
-            PlayerInventory[] invs = Object.FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None);
+            PlayerInventory[] invs = FindObjectsByType<PlayerInventory>(FindObjectsSortMode.None);
             PlayerInventory myInv = null;
             foreach(var inv in invs)
             {
@@ -160,17 +159,22 @@ namespace MonsterQuest.UI
 
             if (myInv != null)
             {
-                WeaponData data = WeaponDatabase.GetWeapon(selectedWeaponId);
-                if (data != null)
+                if (MonsterQuest.Data.WeaponCatalogService.TryGetWeapon(selectedWeaponId, out MonsterQuest.Data.WeaponData data))
                 {
-                    myInv.AddItem(data, 1);
-                    EggHatchingUI.Open(data, false);
+                    myInv.AddWeapon(data);
+                    
+                    // Nota: EggHatchingUI también debe actualizarse para soportar el nuevo WeaponData
+                    // EggHatchingUI.Open(data, false); 
                     
                     if (DataManager.Instance != null)
                     {
                         DataManager.Instance.Data.hasReceivedStarterWeapon = true;
                         DataManager.Instance.SaveData();
                     }
+                }
+                else
+                {
+                    Debug.LogError($"WeaponCatalogService no pudo encontrar el arma ID {selectedWeaponId}");
                 }
             }
             else
