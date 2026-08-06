@@ -97,7 +97,7 @@ namespace MonsterQuest.Services
                 data.handle = Addressables.LoadAssetAsync<GameObject>(visualKey);
                 await data.handle.Task;
 
-                if (data.handle.Status == AsyncOperationStatus.Succeeded)
+                if (data.handle.Status == AsyncOperationStatus.Succeeded && data.handle.Result != null)
                 {
                     data.prefab = data.handle.Result;
                     data.loadTask = null; // Ya cargó
@@ -106,12 +106,14 @@ namespace MonsterQuest.Services
                 }
                 else
                 {
-                    Debug.LogError($"WeaponAssetService: Error cargando {visualKey}");
+                    Debug.LogWarning($"WeaponAssetService: No se encontró {visualKey}. Cargando placeholder...");
                     data.loadTask = null;
                     tcs.SetResult(null);
                     data.activeInstances--;
                     CheckAndRelease(visualKey);
-                    return null;
+                    
+                    // Fallback al placeholder
+                    return await InstantiateWeaponAsync("weapon.visual.placeholder", parent);
                 }
             }
             catch (Exception ex)

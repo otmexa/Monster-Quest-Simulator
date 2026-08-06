@@ -16,7 +16,22 @@ MonoBehaviour:
   m_GUID: 93651784cad335c43b60b798307fab50
   m_SerializeEntries:
   - m_GUID: 33605be302153074a8a264ede9aeffed
-    m_Address: weapon.visual.1
+    m_Address: weapon.visual.000001
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 61f134e708dadaf4fa5c4576fe7f859c
+    m_Address: weapon.visual.placeholder
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: afbde1d23e194df4ebd0a82acfcca0dc
+    m_Address: weapon.visual.000003
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e91dd6511273d804b88c084619247b8a
+    m_Address: weapon.visual.000002
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

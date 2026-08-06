@@ -48,12 +48,37 @@ public class DataManager : MonoBehaviour
     {
         if (File.Exists(saveFilePath))
         {
-            string json = File.ReadAllText(saveFilePath);
-            Data = JsonUtility.FromJson<PlayerData>(json);
-            
-            if (Data.gold < 100000) Data.gold = 100000; // Cheat code for testing eggs
-            
-            Debug.Log("Datos cargados correctamente.");
+            try
+            {
+                string json = File.ReadAllText(saveFilePath);
+                Data = JsonUtility.FromJson<PlayerData>(json);
+                
+                if (Data == null || Data.inventory == null)
+                {
+                    throw new System.Exception("JSON corrupto o vacío.");
+                }
+
+                // Validación anti-corrupción (Fase 3): Limpiar equipados que no existan en ownedWeapons
+                int removed = Data.inventory.equippedWeapons.RemoveAll(equippedSlot => 
+                    !Data.inventory.ownedWeapons.Exists(owned => owned.instanceId == equippedSlot.instanceId));
+                
+                if (removed > 0)
+                {
+                    Debug.LogWarning($"[DataManager] Se removieron {removed} armas equipadas que no existían en el inventario (posible corrupción antigua).");
+                    SaveData();
+                }
+                
+                if (Data.gold < 100000) Data.gold = 100000; // Cheat code for testing eggs
+                
+                Debug.Log("Datos cargados correctamente.");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[DataManager] Error cargando partida, creando una nueva por seguridad. Error: {e.Message}");
+                Data = new PlayerData();
+                Data.gold = 100000;
+                SaveData();
+            }
         }
         else
         {

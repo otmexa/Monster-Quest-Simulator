@@ -9,8 +9,8 @@
       "price": 100,
       "rarityId": "common",
       "weaponTypeId": "sword_1h",
-      "visualKey": "weapon.visual.1",
-      "iconKey": "weapon.icon.1",
+      "visualKey": "weapon.visual.000001",
+      "iconKey": "weapon.icon.000001",
       "requiredContentReleaseId": 1,
       "enabled": true
     },
@@ -21,8 +21,8 @@
       "price": 300,
       "rarityId": "rare",
       "weaponTypeId": "axe_1h",
-      "visualKey": "weapon.visual.2",
-      "iconKey": "weapon.icon.2",
+      "visualKey": "weapon.visual.000002",
+      "iconKey": "weapon.icon.000002",
       "requiredContentReleaseId": 1,
       "enabled": true
     },
@@ -33,8 +33,8 @@
       "price": 1500,
       "rarityId": "epic",
       "weaponTypeId": "wand",
-      "visualKey": "weapon.visual.3",
-      "iconKey": "weapon.icon.3",
+      "visualKey": "weapon.visual.000003",
+      "iconKey": "weapon.icon.000003",
       "requiredContentReleaseId": 1,
       "enabled": true
     }

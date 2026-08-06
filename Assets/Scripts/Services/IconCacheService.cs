@@ -76,7 +76,7 @@ namespace MonsterQuest.Services
                 AsyncOperationHandle<Sprite> handle = Addressables.LoadAssetAsync<Sprite>(iconKey);
                 await handle.Task;
 
-                if (handle.Status == AsyncOperationStatus.Succeeded)
+                if (handle.Status == AsyncOperationStatus.Succeeded && handle.Result != null)
                 {
                     Sprite loadedSprite = handle.Result;
                     
@@ -99,10 +99,15 @@ namespace MonsterQuest.Services
                 }
                 else
                 {
-                    Debug.LogWarning($"Fallo al cargar icono: {iconKey}");
+                    Debug.LogWarning($"Fallo al cargar icono: {iconKey}. Intentando cargar placeholder.");
                     Addressables.Release(handle);
                     tcs.SetResult(null);
                     ongoingLoads.Remove(iconKey);
+                    
+                    if (iconKey != "weapon.icon.placeholder")
+                    {
+                        return await GetIconAsync("weapon.icon.placeholder", cancellationToken);
+                    }
                     return null;
                 }
             }

@@ -14,7 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
   m_GroupName: Weapon_Icons
   m_GUID: 806f45ad1baa0dd49839c9d9cceda6eb
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 6d6bc46d9dceb7348be2494226df76c8
+    m_Address: weapon.icon.placeholder
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dc4159aa7fee8fd4c8050a3450988ade
+    m_Address: weapon.icon.000003
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: ae06efc34affcad45aa028970f7584e7, type: 2}
   m_SchemaSet:

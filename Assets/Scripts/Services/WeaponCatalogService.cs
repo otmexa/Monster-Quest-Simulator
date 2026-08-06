@@ -84,6 +84,11 @@ namespace MonsterQuest.Data
             return weaponsById.TryGetValue(weaponId, out weapon);
         }
 
+        public static IEnumerable<WeaponData> GetAllWeapons()
+        {
+            return weaponsById.Values;
+        }
+
         public static async Task LoadCatalogAsync(IWeaponCatalogSource source, int currentContentReleaseId)
         {
             string json = await source.GetCatalogJsonAsync();
