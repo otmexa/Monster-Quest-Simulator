@@ -181,7 +181,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2453040283
+  GlobalObjectIdHash: 1021214644
   InScenePlacedSourceGlobalObjectIdHash: 2453040283
   DeferredDespawnTick: 0
   Ownership: 1
@@ -555,8 +555,20 @@ MonoBehaviour:
   orbitDistance: 2
   orbitSpeed: 5
   weaponIndex: 0
+  itemData:
+    id: new_weapon
+    displayName: New Weapon
+    description: 
+    type: 2
+    rarity: 0
+    orientation: 0
+    damage: 5
+    sellValue: 10
+    buyValue: 50
+    iconName: 
+    prefabName: 
   trailPrefab: {fileID: 3791137138755721132, guid: e21c3927d74ac1c4b8c1bee8a52c642f, type: 3}
   trailOffset: {x: 0, y: -0.1, z: 0}
-  useDebugValues: 1
+  useDebugValues: 0
   debugIdleOffset: {x: 0.5, y: 0, z: -0.9}
   debugRotationOffset: {x: 0, y: 90, z: 90}

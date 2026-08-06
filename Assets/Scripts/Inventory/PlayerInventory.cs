@@ -18,7 +18,7 @@ namespace MonsterQuest.Inventory
 
         // Events for UI Updates (Triggered locally)
         public event Action<int> OnGoldChanged;
-        public event Action<ItemData, int> OnItemAdded;
+        public event Action<WeaponData, int> OnItemAdded;
 
         public override void OnNetworkSpawn()
         {
@@ -44,7 +44,7 @@ namespace MonsterQuest.Inventory
         }
 
         // Only the Server should call this
-        public void AddItem(ItemData itemData, int amount = 1)
+        public void AddItem(WeaponData itemData, int amount = 1)
         {
             if (!IsServer) return;
             if (itemData == null) return;

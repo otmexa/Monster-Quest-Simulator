@@ -46,20 +46,31 @@ public class PlayerCombat : NetworkBehaviour
 
     public void EquipVisualWeapon(string id)
     {
-        if (baseSwordPrefab == null) return;
+        MonsterQuest.Inventory.WeaponData data = MonsterQuest.Inventory.WeaponDatabase.GetWeapon(id);
+        if (data == null) return;
+        
+        GameObject prefabToUse = baseSwordPrefab;
+        if (!string.IsNullOrEmpty(data.prefabName))
+        {
+            GameObject loadedPrefab = Resources.Load<GameObject>("Prefabs/" + data.prefabName);
+            if (loadedPrefab != null) prefabToUse = loadedPrefab;
+        }
 
-        GameObject newSword = Instantiate(baseSwordPrefab, transform.position, transform.rotation);
+        if (prefabToUse == null) return;
+
+        GameObject newSword = Instantiate(prefabToUse, transform.position, transform.rotation);
         newSword.name = "Sword_" + id;
         newSword.SetActive(true);
         newSword.transform.SetParent(transform);
 
         FloatingWeapon fw = newSword.GetComponent<FloatingWeapon>();
-        if (fw != null)
-        {
-            fw.player = transform;
-            equippedWeapons.Add(fw);
-            weaponMap[id] = fw;
-        }
+        if (fw == null) fw = newSword.AddComponent<FloatingWeapon>(); // Añadir script si el prefab custom no lo trae
+        
+        fw.player = transform;
+        fw.itemData = data;
+        
+        equippedWeapons.Add(fw);
+        weaponMap[id] = fw;
 
         RealignWeapons();
     }
@@ -91,8 +102,19 @@ public class PlayerCombat : NetworkBehaviour
             // orbitTime actúa como el ángulo en radianes en la función de órbita
             fw.orbitTime = (Mathf.PI * 2f / count) * i;
             
-            // Rotación fija que encontramos en el Debug (horizontales, filo hacia atrás)
-            fw.idleRotationOffset = new Vector3(0f, 90f, 90f);
+            // Rotación dependiendo del ScriptableObject (ItemData)
+            if (fw.itemData != null && fw.itemData.orientation == MonsterQuest.Inventory.WeaponOrientation.Vertical)
+            {
+                fw.idleRotationOffset = new Vector3(90f, 0f, 0f); // Vertical ajustado (prueba)
+            }
+            else if (fw.itemData != null && fw.itemData.orientation == MonsterQuest.Inventory.WeaponOrientation.Diagonal)
+            {
+                fw.idleRotationOffset = new Vector3(45f, 45f, 90f); // Diagonal
+            }
+            else
+            {
+                fw.idleRotationOffset = new Vector3(0f, 90f, 90f); // Horizontal (Default de "Capa")
+            }
             
             // Distancia de la espalda encontrada en el Debug
             float zBack = -2.5f; 
@@ -332,7 +354,18 @@ UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
                 Enemy e = currentTarget.GetComponent<Enemy>();
                 if (e != null)
                 {
-                    e.TakeDamage(5); 
+                    int totalDamage = 0;
+                    foreach (var fw in equippedWeapons)
+                    {
+                        if (fw != null && fw.itemData != null)
+                        {
+                            totalDamage += fw.itemData.damage;
+                        }
+                    }
+                    
+                    if (totalDamage == 0) totalDamage = 5; // Daño base si no hay armas
+                    
+                    e.TakeDamage(totalDamage); 
                 }
 
                 lastAttackTime = Time.time;

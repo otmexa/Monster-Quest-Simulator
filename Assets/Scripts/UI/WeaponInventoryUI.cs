@@ -12,6 +12,7 @@ public class WeaponInventoryUI : MonoBehaviour
     [Header("Main HUD Elements")]
     public Text equippedCountText;
     public Button btnOpenWeapons;
+    public Text goldText; // Nuevo campo para el oro
 
     [Header("Popup Elements")]
     public Transform gridContainer;
@@ -31,7 +32,7 @@ public class WeaponInventoryUI : MonoBehaviour
     private int maxSlots = 15;
     private int currentEquipped = 0;
 
-    // Mock data for our 3 weapons
+    // Lista real de armas usando ItemData
     private List<MockWeapon> inventory = new List<MockWeapon>();
     private MockWeapon selectedWeapon = null;
 
@@ -40,23 +41,62 @@ public class WeaponInventoryUI : MonoBehaviour
         public string id;
         public string name;
         public int damage;
+        public int sellValue;
+        public MonsterQuest.Inventory.ItemRarity rarity;
+        public Sprite icon;
         public bool isEquipped;
         public GameObject uiSlot;
     }
 
     void Start()
     {
-        // Generamos 15 espadas de prueba (MockWeapons)
-        for (int i = 1; i <= 15; i++)
+        // Cargar armas reales desde la base de datos central JSON
+        var db = MonsterQuest.Inventory.WeaponDatabase.GetDatabase();
+        
+        // Juntamos todas las armas de todos los mundos para el inventario global
+        List<MonsterQuest.Inventory.WeaponData> allItems = new List<MonsterQuest.Inventory.WeaponData>();
+        foreach(var uni in db.universes)
         {
+            foreach(var w in uni.worlds) 
+            {
+                allItems.AddRange(w.weapons);
+            }
+        }
+        
+        foreach (var item in allItems)
+        {
+            if (item.type != MonsterQuest.Inventory.ItemType.Weapon) continue;
+            
+            bool isSavedAsEquipped = false;
+            
+            // Revisar si está equipada en los datos guardados
+            if (DataManager.Instance != null && DataManager.Instance.Data.inventory.equippedWeapons.Contains(item.id))
+            {
+                isSavedAsEquipped = true;
+                currentEquipped++;
+            }
+
+            // Cargar el ícono desde Resources
+            Sprite loadedIcon = null;
+            if (!string.IsNullOrEmpty(item.iconName))
+            {
+                loadedIcon = Resources.Load<Sprite>("Icons/" + item.iconName);
+            }
+
             inventory.Add(new MockWeapon 
             { 
-                id = "w" + i, 
-                name = "Espada de Prueba " + i, 
-                damage = i * 5, 
-                isEquipped = false 
+                id = item.id, 
+                name = item.displayName, 
+                damage = item.damage, 
+                sellValue = item.sellValue,
+                rarity = item.rarity,
+                icon = loadedIcon,
+                isEquipped = isSavedAsEquipped 
             });
         }
+        
+        // Spawnear espadas equipadas físicamente en el jugador
+        Invoke("LoadEquippedWeapons3D", 0.5f);
 
         weaponsPopupPanel.SetActive(false);
         weaponDetailsPanel.SetActive(false);
@@ -117,11 +157,24 @@ public class WeaponInventoryUI : MonoBehaviour
             iconImg.rectTransform.offsetMin = new Vector2(10, 10);
             iconImg.rectTransform.offsetMax = new Vector2(-10, -10);
             
-            // Try to load our generated sword sprite to display on the slot
-            Sprite swordSprite = Resources.Load<Sprite>("WeaponIcon"); 
-            // Actually it's in Assets/UI/Icons. At runtime Resources.Load won't work unless it's in a Resources folder. 
-            // We can just color it blue if sprite is null, or rely on the fact that the prefab has no specific icon.
-            iconImg.color = new Color(0.2f, 0.6f, 0.9f); // Placeholder color for the item
+            if (w.icon != null)
+            {
+                iconImg.sprite = w.icon;
+                iconImg.color = Color.white;
+            }
+            else
+            {
+                // Fallback color depending on rarity
+                switch(w.rarity)
+                {
+                    case MonsterQuest.Inventory.ItemRarity.Common: iconImg.color = Color.gray; break;
+                    case MonsterQuest.Inventory.ItemRarity.Uncommon: iconImg.color = Color.green; break;
+                    case MonsterQuest.Inventory.ItemRarity.Rare: iconImg.color = Color.blue; break;
+                    case MonsterQuest.Inventory.ItemRarity.Epic: iconImg.color = new Color(0.5f, 0f, 0.5f); break; // Purple
+                    case MonsterQuest.Inventory.ItemRarity.Legendary: iconImg.color = new Color(1f, 0.5f, 0f); break; // Orange
+                    default: iconImg.color = new Color(0.2f, 0.6f, 0.9f); break;
+                }
+            }
 
             // Setup checkmark
             Transform checkmark = slot.transform.Find("Checkmark");
@@ -137,8 +190,19 @@ public class WeaponInventoryUI : MonoBehaviour
     {
         selectedWeapon = w;
         weaponDetailsPanel.SetActive(true);
-        detailsNameText.text = w.name;
-        detailsStatsText.text = $"DAÑO {w.damage}";
+        
+        string rarityColor = "#FFFFFF";
+        switch(w.rarity)
+        {
+            case MonsterQuest.Inventory.ItemRarity.Common: rarityColor = "#A0A0A0"; break;
+            case MonsterQuest.Inventory.ItemRarity.Uncommon: rarityColor = "#00FF00"; break;
+            case MonsterQuest.Inventory.ItemRarity.Rare: rarityColor = "#0080FF"; break;
+            case MonsterQuest.Inventory.ItemRarity.Epic: rarityColor = "#A335EE"; break;
+            case MonsterQuest.Inventory.ItemRarity.Legendary: rarityColor = "#FF8000"; break;
+        }
+
+        detailsNameText.text = $"<color={rarityColor}>{w.name}</color>";
+        detailsStatsText.text = $"DAÑO {w.damage}  |  VALOR: {w.sellValue} G";
 
         if (w.isEquipped)
         {
@@ -162,6 +226,13 @@ public class WeaponInventoryUI : MonoBehaviour
             selectedWeapon.isEquipped = false;
             currentEquipped--;
             Update3DWeapon(selectedWeapon, false);
+            
+            // Guardar en JSON
+            if (DataManager.Instance != null)
+            {
+                DataManager.Instance.Data.inventory.equippedWeapons.Remove(selectedWeapon.id);
+                DataManager.Instance.SaveData();
+            }
         }
         else
         {
@@ -174,6 +245,16 @@ public class WeaponInventoryUI : MonoBehaviour
             selectedWeapon.isEquipped = true;
             currentEquipped++;
             Update3DWeapon(selectedWeapon, true);
+            
+            // Guardar en JSON
+            if (DataManager.Instance != null)
+            {
+                if (!DataManager.Instance.Data.inventory.equippedWeapons.Contains(selectedWeapon.id))
+                {
+                    DataManager.Instance.Data.inventory.equippedWeapons.Add(selectedWeapon.id);
+                }
+                DataManager.Instance.SaveData();
+            }
         }
 
         UpdateHUD();
@@ -191,18 +272,41 @@ public class WeaponInventoryUI : MonoBehaviour
             return;
         }
 
+        if (DataManager.Instance != null)
+        {
+            DataManager.Instance.Data.gold += selectedWeapon.sellValue;
+            DataManager.Instance.SaveData();
+        }
+
         inventory.Remove(selectedWeapon);
         weaponDetailsPanel.SetActive(false);
         selectedWeapon = null;
         
         RefreshGrid();
         capacityText.text = $"{inventory.Count}/100";
-        Debug.Log("Arma vendida (+15 Monedas)");
+        UpdateHUD(); // To update gold text
+        Debug.Log("Arma vendida");
     }
 
     void UpdateHUD()
     {
         equippedCountText.text = $"{currentEquipped}/{maxSlots}";
+        
+        if (goldText != null && DataManager.Instance != null)
+        {
+            goldText.text = $"Oro: {DataManager.Instance.Data.gold}";
+        }
+    }
+
+    void LoadEquippedWeapons3D()
+    {
+        foreach (var w in inventory)
+        {
+            if (w.isEquipped)
+            {
+                Update3DWeapon(w, true);
+            }
+        }
     }
 
     void Update3DWeapon(MockWeapon w, bool equip)

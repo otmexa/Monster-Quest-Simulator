@@ -6,7 +6,7 @@ namespace MonsterQuest.Inventory
     public class PickupItem : NetworkBehaviour
     {
         [Header("Data")]
-        public ItemData itemData;
+        public WeaponData itemData;
         public int amount = 1;
 
         [Header("Flight Settings")]

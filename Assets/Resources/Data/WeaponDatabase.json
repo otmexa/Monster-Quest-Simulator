@@ -1,0 +1,51 @@
+{
+    "universes": [
+        {
+            "universeId": "uni_1",
+            "universeName": "Reino Terrenal",
+            "worlds": [
+                {
+                    "worldId": "uni_1_w1",
+                    "worldName": "Bosque de los Goblins",
+                    "weapons": []
+                },
+                {
+                    "worldId": "uni_1_w2",
+                    "worldName": "Minas Enanas",
+                    "weapons": []
+                },
+                {
+                    "worldId": "uni_1_w3",
+                    "worldName": "Cañón del Desierto",
+                    "weapons": []
+                },
+                {
+                    "worldId": "uni_1_w4",
+                    "worldName": "Montañas Nevadas",
+                    "weapons": []
+                },
+                {
+                    "worldId": "uni_1_w5",
+                    "worldName": "Volcán del Dragón",
+                    "weapons": []
+                }
+            ]
+        },
+        {
+            "universeId": "uni_2",
+            "universeName": "Dimensión del Vacío",
+            "worlds": [
+                {
+                    "worldId": "uni_2_w1",
+                    "worldName": "Pantano de las Almas",
+                    "weapons": []
+                },
+                {
+                    "worldId": "uni_2_w2",
+                    "worldName": "Torre de Cristal Oscuro",
+                    "weapons": []
+                }
+            ]
+        }
+    ]
+}
