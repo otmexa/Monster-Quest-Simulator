@@ -6,8 +6,117 @@
             "worlds": [
                 {
                     "worldId": "uni_1_w1",
-                    "worldName": "Bosque de los Goblins",
-                    "weapons": []
+                    "worldName": "Eternal World",
+                    "weapons": [
+                        {
+                            "id": "uni_1_w1_w1",
+                            "displayName": "New Weapon",
+                            "description": "",
+                            "type": 2,
+                            "rarity": 0,
+                            "orientation": 1,
+                            "customRotationOffset": {
+                                "x": 180.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "damage": 8,
+                            "sellValue": 10,
+                            "buyValue": 50,
+                            "iconName": "",
+                            "prefabName": "dagger11_blue"
+                        },
+                        {
+                            "id": "uni_1_w1_w2",
+                            "displayName": "New Weapon",
+                            "description": "",
+                            "type": 2,
+                            "rarity": 0,
+                            "orientation": 1,
+                            "customRotationOffset": {
+                                "x": 180.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "damage": 8,
+                            "sellValue": 10,
+                            "buyValue": 50,
+                            "iconName": "",
+                            "prefabName": "dagger11_red"
+                        },
+                        {
+                            "id": "uni_1_w1_w3",
+                            "displayName": "New Weapon",
+                            "description": "",
+                            "type": 2,
+                            "rarity": 1,
+                            "orientation": 1,
+                            "customRotationOffset": {
+                                "x": 180.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "damage": 15,
+                            "sellValue": 30,
+                            "buyValue": 150,
+                            "iconName": "",
+                            "prefabName": "dagger11_blue"
+                        },
+                        {
+                            "id": "uni_1_w1_w4",
+                            "displayName": "New Weapon",
+                            "description": "",
+                            "type": 2,
+                            "rarity": 2,
+                            "orientation": 1,
+                            "customRotationOffset": {
+                                "x": 180.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "damage": 28,
+                            "sellValue": 80,
+                            "buyValue": 400,
+                            "iconName": "",
+                            "prefabName": "throwingknife04_purple"
+                        },
+                        {
+                            "id": "uni_1_w1_w5",
+                            "displayName": "New Weapon",
+                            "description": "",
+                            "type": 2,
+                            "rarity": 3,
+                            "orientation": 1,
+                            "customRotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "damage": 50,
+                            "sellValue": 200,
+                            "buyValue": 1000,
+                            "iconName": "",
+                            "prefabName": "throwingaxe11_black"
+                        },
+                        {
+                            "id": "uni_1_w1_w6",
+                            "displayName": "New Weapon",
+                            "description": "",
+                            "type": 2,
+                            "rarity": 4,
+                            "orientation": 1,
+                            "customRotationOffset": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "damage": 100,
+                            "sellValue": 500,
+                            "buyValue": 2500,
+                            "iconName": "",
+                            "prefabName": "throwingstar16_red"
+                        }
+                    ]
                 },
                 {
                     "worldId": "uni_1_w2",

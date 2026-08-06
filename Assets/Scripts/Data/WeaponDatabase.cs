@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace MonsterQuest.Inventory
 {
     public enum ItemType { Currency, Material, Weapon }
-    public enum ItemRarity { Common, Uncommon, Rare, Epic, Legendary }
+    public enum ItemRarity { Uncommon, Rare, Epic, Legendary, Mythical, Eternal, Exotic }
     public enum WeaponOrientation { Horizontal, Vertical, Diagonal }
 
     [Serializable]
@@ -15,8 +15,9 @@ namespace MonsterQuest.Inventory
         public string displayName = "New Weapon";
         public string description = "";
         public ItemType type = ItemType.Weapon;
-        public ItemRarity rarity = ItemRarity.Common;
+        public ItemRarity rarity = ItemRarity.Uncommon;
         public WeaponOrientation orientation = WeaponOrientation.Horizontal;
+        public Vector3 customRotationOffset = Vector3.zero;
         
         public int damage = 5;
         public int sellValue = 10;
@@ -115,7 +116,7 @@ namespace MonsterQuest.Inventory
             
             System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path));
             System.IO.File.WriteAllText(path, json);
-            UnityEditor.AssetDatabase.Refresh();
+            // UnityEditor.AssetDatabase.Refresh(); // Removed to prevent extreme lag during typing.
         }
         #endif
     }

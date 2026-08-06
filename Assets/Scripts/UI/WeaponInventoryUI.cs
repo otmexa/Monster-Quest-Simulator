@@ -167,11 +167,13 @@ public class WeaponInventoryUI : MonoBehaviour
                 // Fallback color depending on rarity
                 switch(w.rarity)
                 {
-                    case MonsterQuest.Inventory.ItemRarity.Common: iconImg.color = Color.gray; break;
                     case MonsterQuest.Inventory.ItemRarity.Uncommon: iconImg.color = Color.green; break;
                     case MonsterQuest.Inventory.ItemRarity.Rare: iconImg.color = Color.blue; break;
                     case MonsterQuest.Inventory.ItemRarity.Epic: iconImg.color = new Color(0.5f, 0f, 0.5f); break; // Purple
                     case MonsterQuest.Inventory.ItemRarity.Legendary: iconImg.color = new Color(1f, 0.5f, 0f); break; // Orange
+                    case MonsterQuest.Inventory.ItemRarity.Mythical: iconImg.color = Color.red; break;
+                    case MonsterQuest.Inventory.ItemRarity.Eternal: iconImg.color = Color.cyan; break;
+                    case MonsterQuest.Inventory.ItemRarity.Exotic: iconImg.color = Color.yellow; break;
                     default: iconImg.color = new Color(0.2f, 0.6f, 0.9f); break;
                 }
             }
@@ -194,11 +196,13 @@ public class WeaponInventoryUI : MonoBehaviour
         string rarityColor = "#FFFFFF";
         switch(w.rarity)
         {
-            case MonsterQuest.Inventory.ItemRarity.Common: rarityColor = "#A0A0A0"; break;
             case MonsterQuest.Inventory.ItemRarity.Uncommon: rarityColor = "#00FF00"; break;
             case MonsterQuest.Inventory.ItemRarity.Rare: rarityColor = "#0080FF"; break;
             case MonsterQuest.Inventory.ItemRarity.Epic: rarityColor = "#A335EE"; break;
             case MonsterQuest.Inventory.ItemRarity.Legendary: rarityColor = "#FF8000"; break;
+            case MonsterQuest.Inventory.ItemRarity.Mythical: rarityColor = "#FF0040"; break; // Red
+            case MonsterQuest.Inventory.ItemRarity.Eternal: rarityColor = "#00FFFF"; break;  // Cyan
+            case MonsterQuest.Inventory.ItemRarity.Exotic: rarityColor = "#FFD700"; break;   // Gold
         }
 
         detailsNameText.text = $"<color={rarityColor}>{w.name}</color>";

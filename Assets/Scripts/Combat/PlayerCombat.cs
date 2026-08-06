@@ -105,7 +105,7 @@ public class PlayerCombat : NetworkBehaviour
             // Rotación dependiendo del ScriptableObject (ItemData)
             if (fw.itemData != null && fw.itemData.orientation == MonsterQuest.Inventory.WeaponOrientation.Vertical)
             {
-                fw.idleRotationOffset = new Vector3(90f, 0f, 0f); // Vertical ajustado (prueba)
+                fw.idleRotationOffset = new Vector3(0f, 90f, 90f); // Vertical
             }
             else if (fw.itemData != null && fw.itemData.orientation == MonsterQuest.Inventory.WeaponOrientation.Diagonal)
             {
@@ -113,7 +113,13 @@ public class PlayerCombat : NetworkBehaviour
             }
             else
             {
-                fw.idleRotationOffset = new Vector3(0f, 90f, 90f); // Horizontal (Default de "Capa")
+                fw.idleRotationOffset = new Vector3(90f, 0f, 0f); // Horizontal
+            }
+
+            // Aplicar el ajuste de rotación fina (Custom Rotation Offset)
+            if (fw.itemData != null)
+            {
+                fw.idleRotationOffset += fw.itemData.customRotationOffset;
             }
             
             // Distancia de la espalda encontrada en el Debug
