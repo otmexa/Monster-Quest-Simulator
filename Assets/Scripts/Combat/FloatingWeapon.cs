@@ -20,6 +20,12 @@ public class FloatingWeapon : MonoBehaviour
     public float orbitSpeed = 5f;
     public int weaponIndex = 0;
 
+    [Header("--- TRAIL ---")]
+    [Tooltip("Arrastra aquí el PREFAB de tu estela (así puedes editar los colores y tamaño visualmente en Unity)")]
+    public GameObject trailPrefab; 
+    [Tooltip("Mueve la Y (ej: -0.8) o la Z (ej: -0.8) para que salga exactamente de la punta de atras")]
+    public Vector3 trailOffset = new Vector3(0, -1.2f, 0); // Ajuste default a la colita
+
     [Header("--- VISUAL DEBUG ---")]
     [Tooltip("Activa esto en PlayMode para sobreescribir la posicion y moverla a mano")]
     public bool useDebugValues = false;
@@ -28,14 +34,33 @@ public class FloatingWeapon : MonoBehaviour
 
     void Start()
     {
-        trail = GetComponentInChildren<TrailRenderer>();
-        if (trail == null)
+        Transform trailOrigin = transform.Find("TrailOrigin");
+        if (trailOrigin == null)
         {
-            trail = gameObject.AddComponent<TrailRenderer>();
-            trail.time = 0.2f;
-            trail.startWidth = 0.1f;
-            trail.endWidth = 0f;
-            trail.emitting = false;
+            GameObject tObj = new GameObject("TrailOrigin");
+            
+            // Auto-detectar la malla para anclar el origen exactamente ahí
+            MeshRenderer meshRenderer = GetComponentInChildren<MeshRenderer>();
+            Transform anchor = meshRenderer != null ? meshRenderer.transform : transform;
+            
+            tObj.transform.SetParent(anchor, false);
+            tObj.transform.localPosition = trailOffset; 
+            trailOrigin = tObj.transform;
+        }
+
+        trail = trailOrigin.GetComponentInChildren<TrailRenderer>();
+        if (trail == null && trailPrefab != null)
+        {
+            // Instanciar el prefab que el usuario armó visualmente
+            GameObject userTrail = Instantiate(trailPrefab, trailOrigin);
+            userTrail.transform.localPosition = Vector3.zero;
+            userTrail.transform.localRotation = Quaternion.identity;
+            trail = userTrail.GetComponent<TrailRenderer>();
+        }
+        
+        if (trail != null)
+        {
+            trail.emitting = true; 
         }
 
         // Asegurarse de que no colisionen fisicamente con el jugador ni entre ellas

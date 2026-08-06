@@ -14,10 +14,10 @@ GameObject:
   - component: {fileID: 167089970074694003}
   - component: {fileID: 9151131192888700723}
   - component: {fileID: 4828997833077355595}
+  - component: {fileID: 3251640562693819566}
   - component: {fileID: 2955809798405508733}
   - component: {fileID: 192680880960970895}
   - component: {fileID: 621482651609179109}
-  - component: {fileID: 3251640562693819566}
   m_Layer: 0
   m_Name: NetworkedPlayer
   m_TagString: Player
@@ -169,6 +169,32 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &3251640562693819566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1980316446354178251}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2453040283
+  InScenePlacedSourceGlobalObjectIdHash: 2453040283
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &2955809798405508733
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -199,7 +225,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   attackRange: 8
   attackSpeed: 2
-  swordPlaceholder: {fileID: 2952902872581683145}
+  equippedWeapons: []
 --- !u!114 &621482651609179109
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -212,32 +238,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b11b3bb3d210587438d926379e9d5fef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TargetVisuals
---- !u!114 &3251640562693819566
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1980316446354178251}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3384794737
-  InScenePlacedSourceGlobalObjectIdHash: 2453040283
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  m_InScenePlaced: 0
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 0
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!1 &6047302456312787096
 GameObject:
   m_ObjectHideFlags: 0
@@ -549,4 +549,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FloatingWeapon
   player: {fileID: 0}
   idleOffset: {x: 0, y: 1.5, z: -1.5}
+  idleRotationOffset: {x: 0, y: 0, z: 90}
   followSpeed: 5
+  orbitTime: 0
+  orbitDistance: 2
+  orbitSpeed: 5
+  weaponIndex: 0
+  trailPrefab: {fileID: 3791137138755721132, guid: e21c3927d74ac1c4b8c1bee8a52c642f, type: 3}
+  trailOffset: {x: 0, y: -0.1, z: 0}
+  useDebugValues: 1
+  debugIdleOffset: {x: 0.5, y: 0, z: -0.9}
+  debugRotationOffset: {x: 0, y: 90, z: 90}
