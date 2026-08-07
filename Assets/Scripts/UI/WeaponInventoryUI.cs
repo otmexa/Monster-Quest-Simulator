@@ -25,6 +25,7 @@ namespace MonsterQuest.UI
         public Text capacityText;
 
         [Header("Details Panel")]
+        public RawImage previewImage; // Fase 7
         public Text detailsNameText;
         public Text detailsStatsText;
         public Button btnEquip;
@@ -51,6 +52,7 @@ namespace MonsterQuest.UI
             public int sellValue;
             public string rarityId;
             public string iconKey;
+            public string visualKey;
             public bool isEquipped;
             public GameObject uiSlot;
         }
@@ -100,12 +102,13 @@ namespace MonsterQuest.UI
                     inventory.Add(new MockWeapon 
                     { 
                         instanceId = inst.instanceId,
-                        weaponId = inst.weaponId, 
+                        weaponId = catalogData.weaponId, 
                         name = catalogData.localizationKey,
                         damage = catalogData.damage, 
-                        sellValue = catalogData.price / 2,
-                        rarityId = catalogData.rarityId,
+                        sellValue = catalogData.price / 2, // Dummy sell value
+                        rarityId = catalogData.rarityId.ToLower(),
                         iconKey = catalogData.iconKey,
+                        visualKey = catalogData.visualKey,
                         isEquipped = isEquipped 
                     });
                 }
@@ -125,6 +128,11 @@ namespace MonsterQuest.UI
 
         public void CloseWeaponsPopup()
         {
+            if (WeaponPreviewService.Instance != null)
+            {
+                WeaponPreviewService.Instance.HidePreview();
+            }
+
             popupCts?.Cancel();
             popupCts = null;
 
@@ -132,21 +140,6 @@ namespace MonsterQuest.UI
             if (IconCacheService.Instance != null)
             {
                 IconCacheService.Instance.ClearCache();
-            }
-        }
-
-        async void LoadIconAsync(MockWeapon w, Image iconImg, CancellationToken token)
-        {
-            if (IconCacheService.Instance == null) return;
-            
-            Sprite sprite = await IconCacheService.Instance.GetIconAsync(w.iconKey, token);
-            
-            if (token.IsCancellationRequested) return;
-
-            if (iconImg != null && sprite != null) 
-            {
-                iconImg.sprite = sprite;
-                iconImg.color = Color.white;
             }
         }
 
@@ -160,45 +153,52 @@ namespace MonsterQuest.UI
                 slot.SetActive(true); 
                 w.uiSlot = slot;
 
-                Button btn = slot.GetComponent<Button>();
-                MockWeapon capturedW = w; 
-                btn.onClick.AddListener(() => ShowDetails(capturedW));
-
-                Image iconImg = new GameObject("Icon").AddComponent<Image>();
-                iconImg.transform.SetParent(slot.transform, false);
-                iconImg.rectTransform.anchorMin = Vector2.zero;
-                iconImg.rectTransform.anchorMax = Vector2.one;
-                iconImg.rectTransform.offsetMin = new Vector2(10, 10);
-                iconImg.rectTransform.offsetMax = new Vector2(-10, -10);
-                
-                if (placeholderSprite != null)
+                // En lugar de añadir componentes manualmente, intentamos obtener o añadir el WeaponSlotCell
+                WeaponSlotCell cell = slot.GetComponent<WeaponSlotCell>();
+                if (cell == null)
                 {
-                    iconImg.sprite = placeholderSprite;
-                    iconImg.color = new Color(1f, 1f, 1f, 0.5f); 
-                }
-                else
-                {
-                    switch(w.rarityId)
+                    cell = slot.AddComponent<WeaponSlotCell>();
+                    
+                    // Configurar referencias asumiendo la estructura del prefab actual
+                    cell.background = slot.GetComponent<Image>();
+                    
+                    Transform iconTr = slot.transform.Find("Icon");
+                    if (iconTr == null)
                     {
-                        case "uncommon": iconImg.color = Color.green; break;
-                        case "rare": iconImg.color = Color.blue; break;
-                        case "epic": iconImg.color = new Color(0.5f, 0f, 0.5f); break; 
-                        case "legendary": iconImg.color = new Color(1f, 0.5f, 0f); break; 
-                        default: iconImg.color = new Color(0.2f, 0.6f, 0.9f); break;
+                        GameObject iconObj = new GameObject("Icon");
+                        iconObj.transform.SetParent(slot.transform, false);
+                        cell.iconImage = iconObj.AddComponent<Image>();
+                        cell.iconImage.rectTransform.anchorMin = Vector2.zero;
+                        cell.iconImage.rectTransform.anchorMax = Vector2.one;
+                        cell.iconImage.rectTransform.offsetMin = new Vector2(10, 10);
+                        cell.iconImage.rectTransform.offsetMax = new Vector2(-10, -10);
+                    }
+                    else
+                    {
+                        cell.iconImage = iconTr.GetComponent<Image>();
+                    }
+
+                    Transform checkmarkTr = slot.transform.Find("Checkmark");
+                    if (checkmarkTr != null)
+                    {
+                        cell.checkmarkObj = checkmarkTr.gameObject;
+                        cell.checkmarkObj.transform.SetAsLastSibling();
                     }
                 }
-
-                if (popupCts != null)
+                
+                // Extraer WeaponInstanceData y WeaponData del MockWeapon
+                if (WeaponCatalogService.TryGetWeapon(w.weaponId, out WeaponData catalogData))
                 {
-                    LoadIconAsync(w, iconImg, popupCts.Token);
+                    WeaponInstanceData instData = new WeaponInstanceData { instanceId = w.instanceId };
+                    cell.Setup(instData, catalogData, w.isEquipped, placeholderSprite);
                 }
 
-                Transform checkmark = slot.transform.Find("Checkmark");
-                if (checkmark != null)
+                // Subscribirse al evento de selección
+                cell.OnWeaponSelected += (instanceId) => 
                 {
-                    checkmark.SetAsLastSibling(); 
-                    checkmark.gameObject.SetActive(w.isEquipped);
-                }
+                    MockWeapon selected = inventory.Find(x => x.instanceId == instanceId);
+                    if (selected != null) ShowDetails(selected);
+                };
             }
         }
 
@@ -229,6 +229,19 @@ namespace MonsterQuest.UI
             {
                 btnEquipText.text = "Equipar";
                 btnEquip.GetComponent<Image>().color = new Color(0.2f, 0.8f, 0.2f); 
+            }
+
+            // Mostrar Preview 3D
+            if (previewImage != null && WeaponPreviewService.Instance != null)
+            {
+                WeaponPreviewService.Instance.ShowPreview(w.visualKey, previewImage);
+                
+                // Asegurar que tiene el drag handler
+                WeaponPreviewInputHandler handler = previewImage.GetComponent<WeaponPreviewInputHandler>();
+                if (handler == null)
+                {
+                    handler = previewImage.gameObject.AddComponent<WeaponPreviewInputHandler>();
+                }
             }
         }
 

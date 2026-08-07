@@ -22,6 +22,9 @@ public class DataManager : MonoBehaviour
             // Definimos la ruta segura donde se guardará el JSON
             saveFilePath = Path.Combine(Application.persistentDataPath, "PlayerData.json");
             
+            // Cargamos el catálogo de armas de forma asíncrona pero rápida
+            _ = MonsterQuest.Data.WeaponCatalogService.LoadCatalogAsync(new MonsterQuest.Data.LocalWeaponCatalogSource(), 1);
+
             // Cargamos los datos apenas arranca el juego
             LoadData();
         }

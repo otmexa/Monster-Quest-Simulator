@@ -73,7 +73,19 @@ namespace MonsterQuest.Services
 
             try
             {
-                AsyncOperationHandle<Sprite> handle = Addressables.LoadAssetAsync<Sprite>(iconKey);
+                AsyncOperationHandle<Sprite> handle;
+                try 
+                {
+                    handle = Addressables.LoadAssetAsync<Sprite>(iconKey);
+                }
+                catch (UnityEngine.AddressableAssets.InvalidKeyException)
+                {
+                    // El icono no existe en Addressables aún (Placeholder/Fase 6 pendiente)
+                    tcs.SetResult(null);
+                    ongoingLoads.Remove(iconKey);
+                    return null;
+                }
+
                 await handle.Task;
 
                 if (handle.Status == AsyncOperationStatus.Succeeded && handle.Result != null)

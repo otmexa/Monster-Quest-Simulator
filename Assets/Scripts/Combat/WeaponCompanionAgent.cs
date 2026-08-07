@@ -58,8 +58,23 @@ namespace MonsterQuest.Combat
             visualInstance = await WeaponAssetService.Instance.InstantiateWeaponAsync(catalogData.visualKey, transform);
             if (visualInstance != null)
             {
-                visualInstance.transform.localPosition = Vector3.zero;
-                visualInstance.transform.localRotation = Quaternion.Euler(idleRotationOffset);
+                WeaponVisualConfig config = visualInstance.GetComponent<WeaponVisualConfig>();
+                
+                if (config != null)
+                {
+                    visualInstance.transform.localPosition = config.localPositionOffset;
+                    idleRotationOffset = config.localRotationOffset;
+                    visualInstance.transform.localRotation = Quaternion.Euler(idleRotationOffset);
+                    visualInstance.transform.localScale = config.localScale;
+                }
+                else
+                {
+                    // Fallback a los valores originales por defecto si no tiene config
+                    visualInstance.transform.localPosition = Vector3.zero;
+                    idleRotationOffset = new Vector3(0f, 90f, 90f);
+                    visualInstance.transform.localRotation = Quaternion.Euler(idleRotationOffset);
+                    visualInstance.transform.localScale = Vector3.one;
+                }
             }
         }
 
