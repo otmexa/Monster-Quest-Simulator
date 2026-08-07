@@ -11,36 +11,39 @@ namespace MonsterQuest.UI
     {
         [Header("UI Panels")]
         public GameObject leftHUDPanel;
-        public GameObject weaponsPopupPanel;
-        public GameObject weaponDetailsPanel;
+        public static WeaponInventoryUI Instance { get; private set; }
 
-        [Header("Main HUD Elements")]
-        public Text equippedCountText;
-        public Button btnOpenWeapons;
-        public Text goldText;
-
-        [Header("Popup Elements")]
+        public GameObject slotPrefab;
         public Transform gridContainer;
-        public GameObject weaponSlotPrefab;
-        public Text capacityText;
-
-        [Header("Details Panel")]
-        public RawImage previewImage; // Fase 7
+        public Sprite placeholderSprite;
+        public GameObject weaponDetailsPanel;
+        
         public Text detailsNameText;
         public Text detailsStatsText;
+        public Text capacityText;
+        
+        public Text equippedCountText;
         public Button btnEquip;
         public Text btnEquipText;
+        public Text goldText;
+        
+        public int maxSlots = 15;
+        private int currentEquipped = 0;
+        
+        private List<MockWeapon> inventory = new List<MockWeapon>();
+        private MockWeapon selectedWeapon;
+        
+        private MonsterQuest.Inventory.PlayerInventory localPlayerInventory;
+        
+        public RawImage previewImage;
+        public GameObject leftHUDPanel;
+        public GameObject weaponsPopupPanel;
+        public Button btnOpenWeapons;
         public Button btnSell;
 
         [Header("Dependencies")]
         public PlayerCombat playerCombat;
 
-        private int maxSlots = 15;
-        private int currentEquipped = 0;
-
-        private List<MockWeapon> inventory = new List<MockWeapon>();
-        private MockWeapon selectedWeapon = null;
-        private Sprite placeholderSprite;
         private CancellationTokenSource popupCts;
 
         private class MockWeapon
@@ -243,43 +246,50 @@ namespace MonsterQuest.UI
                     handler = previewImage.gameObject.AddComponent<WeaponPreviewInputHandler>();
                 }
             }
-        }
-
-        void OnEquipClicked()
+               void OnEquipClicked()
         {
             if (selectedWeapon == null) return;
 
+            EnsurePlayerInventory();
+
             if (selectedWeapon.isEquipped)
             {
-                selectedWeapon.isEquipped = false;
-                currentEquipped--;
-                Update3DWeapon(selectedWeapon, false);
-                
-                if (DataManager.Instance != null)
+                if (localPlayerInventory != null)
                 {
-                    DataManager.Instance.Data.inventory.equippedWeapons.RemoveAll(e => e.instanceId == selectedWeapon.instanceId);
-                    DataManager.Instance.SaveData();
+                    bool success = localPlayerInventory.UnequipWeapon(selectedWeapon.instanceId);
+                    if (success)
+                    {
+                        selectedWeapon.isEquipped = false;
+                        currentEquipped--;
+                    }
                 }
             }
             else
             {
                 if (currentEquipped >= maxSlots)
                 {
-                    Debug.LogWarning("No tienes más slots disponibles!");
+                    Debug.LogWarning("No tienes mǭs slots disponibles!");
                     return;
                 }
-                selectedWeapon.isEquipped = true;
-                currentEquipped++;
-                Update3DWeapon(selectedWeapon, true);
                 
-                if (DataManager.Instance != null)
+                if (localPlayerInventory != null)
                 {
-                    if (!DataManager.Instance.Data.inventory.equippedWeapons.Exists(e => e.instanceId == selectedWeapon.instanceId))
+                    // Determinar siguiente slot libre
+                    int nextSlot = 0;
+                    if (DataManager.Instance != null)
                     {
-                        int nextSlot = DataManager.Instance.Data.inventory.equippedWeapons.Count;
-                        DataManager.Instance.Data.inventory.equippedWeapons.Add(new EquippedWeaponSlotData { slotIndex = nextSlot, instanceId = selectedWeapon.instanceId });
+                        while (DataManager.Instance.Data.inventory.equippedWeapons.Exists(s => s.slotIndex == nextSlot))
+                        {
+                            nextSlot++;
+                        }
                     }
-                    DataManager.Instance.SaveData();
+
+                    bool success = localPlayerInventory.EquipWeapon(selectedWeapon.instanceId, nextSlot);
+                    if (success)
+                    {
+                        selectedWeapon.isEquipped = true;
+                        currentEquipped++;
+                    }
                 }
             }
 
@@ -334,30 +344,17 @@ namespace MonsterQuest.UI
 
         void LoadEquippedWeapons3D()
         {
-            foreach (var w in inventory)
-            {
-                if (w.isEquipped)
-                {
-                    Update3DWeapon(w, true);
-                }
-            }
+            // Ya no es necesario instanciar desde UI; el WeaponCompanionManager 
+            // se inicializar al arrancar leyendo PlayerInventory.
         }
 
-        void Update3DWeapon(MockWeapon w, bool equip)
+        void EnsurePlayerInventory()
         {
-            if (playerCombat == null)
+            if (localPlayerInventory == null)
             {
                 GameObject player = GameObject.Find("NetworkedPlayer(Clone)"); 
                 if (player == null) player = GameObject.Find("NetworkedPlayer");
-                if (player != null) playerCombat = player.GetComponent<PlayerCombat>();
-            }
-
-            if (playerCombat != null)
-            {
-                if (equip)
-                    playerCombat.EquipVisualWeapon(w.instanceId); 
-                else
-                    playerCombat.UnequipVisualWeapon(w.instanceId);
+                if (player != null) localPlayerInventory = player.GetComponent<MonsterQuest.Inventory.PlayerInventory>();
             }
         }
     }

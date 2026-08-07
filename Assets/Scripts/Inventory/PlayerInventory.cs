@@ -93,6 +93,113 @@ namespace MonsterQuest.Inventory
 
         // --- NEW WEAPON COMPANION ARCHITECTURE ---
 
+        public event Action<EquippedWeaponSlotData> OnWeaponEquipped;
+        public event Action<string> OnWeaponUnequipped;
+        public event Action<string> OnWeaponStatsChanged;
+
+        public bool EquipWeapon(string instanceId, int slotIndex)
+        {
+            if (DataManager.Instance == null) return false;
+            
+            var inv = DataManager.Instance.Data.inventory;
+
+            // 1. Validar que el arma pertenece al jugador
+            if (!inv.ownedWeapons.Exists(w => w.instanceId == instanceId))
+            {
+                Debug.LogWarning($"[PlayerInventory] Equip fallido: El jugador no posee el arma {instanceId}.");
+                return false;
+            }
+
+            // 2. Validar lmites de slot
+            if (slotIndex < 0 || slotIndex > 14)
+            {
+                Debug.LogWarning($"[PlayerInventory] Equip fallido: Slot {slotIndex} invlido (debe ser 0-14).");
+                return false;
+            }
+
+            // 3. Validar que el slot no est ocupado
+            if (inv.equippedWeapons.Exists(s => s.slotIndex == slotIndex))
+            {
+                Debug.LogWarning($"[PlayerInventory] Equip fallido: Slot {slotIndex} ya est ocupado.");
+                return false;
+            }
+
+            // 4. Validar que la instancia no est equipada ya
+            if (inv.equippedWeapons.Exists(s => s.instanceId == instanceId))
+            {
+                Debug.LogWarning($"[PlayerInventory] Equip fallido: El arma {instanceId} ya est equipada.");
+                return false;
+            }
+
+            // 5. Mximo 15 armas (0-14)
+            if (inv.equippedWeapons.Count >= 15)
+            {
+                Debug.LogWarning("[PlayerInventory] Equip fallido: Mximo de 15 armas alcanzado.");
+                return false;
+            }
+
+            // Modificar memoria
+            var slotData = new EquippedWeaponSlotData { slotIndex = slotIndex, instanceId = instanceId };
+            inv.equippedWeapons.Add(slotData);
+
+            try
+            {
+                // Guardar JSON
+                DataManager.Instance.SaveData();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[PlayerInventory] Fallo al guardar tras equipar {instanceId}. Revirtiendo cambios. Error: {ex}");
+                inv.equippedWeapons.Remove(slotData);
+                return false;
+            }
+
+            // Notificar a combate
+            OnWeaponEquipped?.Invoke(slotData);
+            return true;
+        }
+
+        public bool UnequipWeapon(string instanceId)
+        {
+            if (DataManager.Instance == null) return false;
+            var inv = DataManager.Instance.Data.inventory;
+
+            var slotData = inv.equippedWeapons.Find(s => s.instanceId == instanceId);
+            if (slotData == null) return false; // Ya estaba desequipada o no exista
+
+            // Modificar memoria
+            inv.equippedWeapons.Remove(slotData);
+
+            try
+            {
+                // Guardar JSON
+                DataManager.Instance.SaveData();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[PlayerInventory] Fallo al guardar tras desequipar {instanceId}. Revirtiendo cambios. Error: {ex}");
+                inv.equippedWeapons.Add(slotData);
+                return false;
+            }
+
+            // Notificar a combate
+            OnWeaponUnequipped?.Invoke(instanceId);
+            return true;
+        }
+
+        public List<EquippedWeaponSlotData> GetEquippedWeaponsOrdered()
+        {
+            if (DataManager.Instance == null) return new List<EquippedWeaponSlotData>();
+            var list = new List<EquippedWeaponSlotData>(DataManager.Instance.Data.inventory.equippedWeapons);
+            list.Sort((a, b) => a.slotIndex.CompareTo(b.slotIndex));
+            return list;
+        }
+
+        public void NotifyStatsChanged(string instanceId)
+        {
+            OnWeaponStatsChanged?.Invoke(instanceId);
+        }
+
         public void AddWeapon(MonsterQuest.Data.WeaponData itemData, int level = 1, int enhancement = 0, int durability = 100)
         {
             if (!IsServer) return;

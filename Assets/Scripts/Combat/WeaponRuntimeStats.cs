@@ -34,5 +34,13 @@ namespace MonsterQuest.Combat
         {
             finalDamage += (level - 1) * 2; // Ejemplo: +2 daño por nivel
         }
+
+        public static WeaponRuntimeStats Calculate(MonsterQuest.Data.WeaponData catalogData, MonsterQuest.Data.WeaponInstanceData instanceData)
+        {
+            WeaponRuntimeStats stats = new WeaponRuntimeStats(catalogData.damage, 1f, 3f);
+            stats.ApplyLevelBonus(instanceData.level);
+            // Aquí se pueden aplicar más modificadores de instanceData.enhancement etc.
+            return stats;
+        }
     }
 }

@@ -38,22 +38,6 @@ public class PlayerCombat : NetworkBehaviour
         }
     }
 
-    public void EquipVisualWeapon(string instanceId)
-    {
-        if (companionManager != null)
-        {
-            companionManager.EquipCompanion(instanceId);
-        }
-    }
-
-    public void UnequipVisualWeapon(string instanceId)
-    {
-        if (companionManager != null)
-        {
-            companionManager.UnequipCompanion(instanceId);
-        }
-    }
-
     void Update()
     {
         if (!IsOwner) return;

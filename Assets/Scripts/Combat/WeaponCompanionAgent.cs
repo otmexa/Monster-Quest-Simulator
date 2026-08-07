@@ -12,16 +12,25 @@ namespace MonsterQuest.Combat
         Returning
     }
 
+    public enum WeaponVisualState
+    {
+        Loading,
+        Ready,
+        Failed
+    }
+
     public class WeaponCompanionAgent : MonoBehaviour
     {
         public string InstanceId { get; private set; }
         public int WeaponId { get; private set; }
         public WeaponRuntimeStats Stats { get; private set; }
         
+        private CompanionState currentState = CompanionState.Orbiting;
+        private WeaponVisualState visualState = WeaponVisualState.Loading;
+
         private WeaponInstanceData instanceData;
         private WeaponData catalogData;
         
-        private CompanionState currentState = CompanionState.Orbiting;
         private Transform sharedTarget;
         private Enemy targetEnemy;
         
@@ -42,39 +51,60 @@ namespace MonsterQuest.Combat
             instanceData = instData;
             catalogData = cData;
             
-            RecalculateStats();
+            Stats = WeaponRuntimeStats.Calculate(catalogData, instanceData);
+            
             LoadVisual();
         }
 
-        public void RecalculateStats()
+        public void UpdateRuntimeStats(WeaponRuntimeStats newStats)
         {
-            // Base del catálogo + bonificaciones de nivel/encantamientos
-            Stats = new WeaponRuntimeStats(catalogData.damage, 1f, 3f);
-            Stats.ApplyLevelBonus(instanceData.level);
+            Stats = newStats;
         }
 
         private async void LoadVisual()
         {
-            visualInstance = await WeaponAssetService.Instance.InstantiateWeaponAsync(catalogData.visualKey, transform);
-            if (visualInstance != null)
+            visualState = WeaponVisualState.Loading;
+            
+            try
             {
-                WeaponVisualConfig config = visualInstance.GetComponent<WeaponVisualConfig>();
+                visualInstance = await WeaponAssetService.Instance.InstantiateWeaponAsync(catalogData.visualKey, transform);
                 
-                if (config != null)
+                if (this == null) // Si el objeto fue destruido durante la carga
                 {
-                    visualInstance.transform.localPosition = config.localPositionOffset;
-                    idleRotationOffset = config.localRotationOffset;
-                    visualInstance.transform.localRotation = Quaternion.Euler(idleRotationOffset);
-                    visualInstance.transform.localScale = config.localScale;
+                    if (visualInstance != null) WeaponAssetService.Instance.ReleaseWeaponInstance(catalogData.visualKey, visualInstance);
+                    return;
+                }
+
+                if (visualInstance != null)
+                {
+                    visualState = WeaponVisualState.Ready;
+                    WeaponVisualConfig config = visualInstance.GetComponent<WeaponVisualConfig>();
+                    
+                    if (config != null)
+                    {
+                        visualInstance.transform.localPosition = config.localPositionOffset;
+                        idleRotationOffset = config.localRotationOffset;
+                        visualInstance.transform.localRotation = Quaternion.Euler(idleRotationOffset);
+                        visualInstance.transform.localScale = config.localScale;
+                    }
+                    else
+                    {
+                        visualInstance.transform.localPosition = Vector3.zero;
+                        idleRotationOffset = new Vector3(0f, 90f, 90f);
+                        visualInstance.transform.localRotation = Quaternion.Euler(idleRotationOffset);
+                        visualInstance.transform.localScale = Vector3.one;
+                    }
                 }
                 else
                 {
-                    // Fallback a los valores originales por defecto si no tiene config
-                    visualInstance.transform.localPosition = Vector3.zero;
-                    idleRotationOffset = new Vector3(0f, 90f, 90f);
-                    visualInstance.transform.localRotation = Quaternion.Euler(idleRotationOffset);
-                    visualInstance.transform.localScale = Vector3.one;
+                    visualState = WeaponVisualState.Failed;
+                    Debug.LogWarning($"[WeaponCompanionAgent] Falla visual para {catalogData.visualKey}, pero el arma seguir activa.");
                 }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[WeaponCompanionAgent] Excepcin en LoadVisual: {ex}");
+                if (this != null) visualState = WeaponVisualState.Failed;
             }
         }
 
