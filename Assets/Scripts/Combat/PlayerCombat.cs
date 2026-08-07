@@ -144,6 +144,7 @@ public class PlayerCombat : NetworkBehaviour
         if (currentTarget != null)
         {
             Enemy e = currentTarget.GetComponent<Enemy>();
+            
             if (e == null || e.IsDead())
             {
                 if (e != null) e.isTargeted = false;
@@ -154,6 +155,7 @@ public class PlayerCombat : NetworkBehaviour
         if (queuedTarget != null)
         {
             Enemy e = queuedTarget.GetComponent<Enemy>();
+            
             if (e == null || e.IsDead())
             {
                 if (e != null) e.isTargeted = false;
@@ -168,16 +170,23 @@ public class PlayerCombat : NetworkBehaviour
             if (currentTarget != null)
             {
                 float distance = Vector3.Distance(transform.position, currentTarget.position);
-                
-                // Rotar jugador hacia el enemigo si hay target
-                Vector3 direction = (currentTarget.position - transform.position).normalized;
-                direction.y = 0;
-                if (direction.magnitude > 0.1f && distance <= globalDetectionRange)
+                if (distance <= globalDetectionRange)
                 {
-                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), 10f * Time.deltaTime);
-                }
+                    // Rotar jugador hacia el enemigo si hay target
+                    Vector3 direction = (currentTarget.position - transform.position).normalized;
+                    direction.y = 0;
+                    if (direction.magnitude > 0.1f)
+                    {
+                        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), 10f * Time.deltaTime);
+                    }
 
-                companionManager.SetTarget(currentTarget);
+                    companionManager.SetTarget(currentTarget);
+                }
+                else
+                {
+                    // Estamos muy lejos, las armas regresan pero mantenemos el objetivo seleccionado
+                    companionManager.ClearTarget();
+                }
             }
             else
             {

@@ -1,4 +1,4 @@
-# Checklist Maestro Actualizado — Sistema de Armas Compañeras
+# Checklist Maestro Actualizado â€” Sistema de Armas CompaÃ±eras
 
 ## Fase 1: Addressables y entorno TESTED [OK]
 
@@ -12,13 +12,13 @@
 
   * `weapon.visual.000123`
   * `weapon.icon.000123`
-* `[x]` Convertir las demás armas de prueba y sus iconos a Addressables.
+* `[x]` Convertir las demÃ¡s armas de prueba y sus iconos a Addressables.
 * `[x]` Agregar un prefab visual placeholder para claves inexistentes.
 * `[x]` Agregar un icono placeholder para cargas pendientes o fallidas.
 
 ---
 
-## Fase 2: Catálogo lógico JSON TESTED [OK]
+## Fase 2: CatÃ¡logo lÃ³gico JSON TESTED [OK]
 
 * `[x]` Crear `WeaponCatalogResponse`.
 * `[x]` Crear `WeaponData`.
@@ -28,19 +28,19 @@
 * `[x]` Leer un JSON local dummy sin VPS.
 * `[x]` Deserializar el arreglo de armas.
 * `[x]` Construir `Dictionary<int, WeaponData>`.
-* `[x]` Validar JSON vacío o corrupto.
+* `[x]` Validar JSON vacÃ­o o corrupto.
 * `[x]` Validar IDs duplicados.
 * `[x]` Validar campos obligatorios.
 * `[x]` Implementar `TryGetWeapon(int weaponId, out WeaponData weapon)`.
-* `[x]` Probar el catálogo con tres armas locales.
+* `[x]` Probar el catÃ¡logo con tres armas locales.
 * `[x]` Marcar `WeaponDatabase.cs` como `[Obsolete]`.
 * `[/]` Retirar gradualmente las dependencias restantes de `WeaponDatabase.cs`.
-* `[ ]` Eliminar definitivamente `WeaponDatabase.cs` cuando ningún sistema lo utilice.
-* `[x]` Verificar o implementar `GetAllWeapons()` si todavía lo necesita la UI o el editor.
+* `[ ]` Eliminar definitivamente `WeaponDatabase.cs` cuando ningÃºn sistema lo utilice.
+* `[x]` Verificar o implementar `GetAllWeapons()` si todavÃ­a lo necesita la UI o el editor.
 
 ---
 
-## Fase 3: Datos del jugador e instancias únicas TESTED [OK]
+## Fase 3: Datos del jugador e instancias Ãºnicas TESTED [OK]
 
 ### `PlayerInventoryData.cs`
 
@@ -63,11 +63,11 @@ List<EquippedWeaponSlotData> equippedWeapons;
 
 ### `PlayerInventory.cs`
 
-* `[x]` Refactorizar el inventario para trabajar con instancias únicas.
+* `[x]` Refactorizar el inventario para trabajar con instancias Ãºnicas.
 * `[x]` Implementar `AddWeapon`.
 * `[x]` Generar un GUID por cada arma obtenida.
 * `[x]` Implementar `GetWeapon`.
-* `[x]` Adaptar los métodos existentes al nuevo esquema.
+* `[x]` Adaptar los mÃ©todos existentes al nuevo esquema.
 * `[x]` Confirmar que no se pueda equipar dos veces la misma instancia.
 * `[x]` Validar que cada `instanceId` equipado exista en `ownedWeapons`.
 * `[x]` Probar equipamiento y desequipamiento por `instanceId`.
@@ -75,71 +75,71 @@ List<EquippedWeaponSlotData> equippedWeapons;
 
 ### `WeaponSelectionUI.cs`
 
-* `[x]` Adaptar la pantalla de selección al catálogo JSON.
-* `[x]` Utilizar IDs numéricos.
+* `[x]` Adaptar la pantalla de selecciÃ³n al catÃ¡logo JSON.
+* `[x]` Utilizar IDs numÃ©ricos.
 * `[x]` Crear una `WeaponInstanceData` al seleccionar el arma inicial.
 * `[x]` Guardar la nueva instancia mediante `PlayerInventory`.
 
 ---
 
-## Fase 4: Gestión centralizada de assets 3D (Implementada - Testing pendiente: prueba de rendimiento muchas invocaciones equipar y desequipar con script en cliente)
+## Fase 4: GestiÃ³n centralizada de assets 3D (Implementada - Testing pendiente: prueba de rendimiento muchas invocaciones equipar y desequipar con script en cliente)
 
 ### `WeaponAssetService.cs`
 
 * `[x]` Confirmar que existe un solo handle por `visualKey`.
-* `[x]` Compartir una misma carga pendiente cuando varias armas soliciten simultáneamente la misma clave.
+* `[x]` Compartir una misma carga pendiente cuando varias armas soliciten simultÃ¡neamente la misma clave.
 * `[x]` Destruir individualmente cada GameObject retirado.
-* `[x]` Liberar el handle solamente cuando desaparezca la última instancia.
+* `[x]` Liberar el handle solamente cuando desaparezca la Ãºltima instancia.
 * `[x]` Manejar claves inexistentes mediante el visual placeholder.
 * `[x]` Limpiar correctamente cargas fallidas u obsoletas.
-* `[x]` Limpiar handles al cambiar escena, cerrar sesión o destruir al jugador.
+* `[x]` Limpiar handles al cambiar escena, cerrar sesiÃ³n o destruir al jugador.
 
 ### `WeaponVisualService.cs`
 
-* `[x]` Crear la máquina de estados:
+* `[x]` Crear la mÃ¡quina de estados:
 
   * `None`
   * `Loading`
   * `Equipped`
   * `Failed`
 * `[x]` Implementar `equipRequestVersion`.
-* `[x]` Probar la instanciación de un arma en Play Mode.
+* `[x]` Probar la instanciaciÃ³n de un arma en Play Mode.
 * `[x]` Refactorizarlo para utilizar internamente `WeaponAssetService`.
 * `[x]` Evitar que ambos servicios carguen el mismo prefab por separado.
-* `[x]` Decidir si seguirá usándose para previews o armas normales.
-* `[x]` Marcarlo como obsoleto si `WeaponAssetService` y los compañeros reemplazan completamente su función.
+* `[x]` Decidir si seguirÃ¡ usÃ¡ndose para previews o armas normales.
+* `[x]` Marcarlo como obsoleto si `WeaponAssetService` y los compaÃ±eros reemplazan completamente su funciÃ³n.
 
 ---
 
-## Fase 5: Corrección visual de armas (Implementada - Testing pendiente hasta la Fase del Weapon Manager)
+## Fase 5: CorrecciÃ³n visual de armas (Implementada - Testing pendiente hasta la Fase del Weapon Manager)
 
 ### `WeaponVisualConfig.cs`
 
 * `[x]` Crear `WeaponVisualConfig`.
 * `[x]` Guardar por arma:
 
-  * posición local
-  * rotación local
+  * posiciÃ³n local
+  * rotaciÃ³n local
   * escala
-  * orientación de ataque
+  * orientaciÃ³n de ataque
   * escala de preview
-  * rotación de preview
-* `[x]` Aplicar la configuración al crear cada arma compañera.
-* `[x]` Aplicar la configuración en el preview 3D.
-* `[x]` Validar que cada prefab tenga una configuración visual válida.
+  * rotaciÃ³n de preview
+* `[x]` Aplicar la configuraciÃ³n al crear cada arma compaÃ±era.
+* `[x]` Aplicar la configuraciÃ³n en el preview 3D.
+* `[x]` Validar que cada prefab tenga una configuraciÃ³n visual vÃ¡lida.
 
 ---
 
-## Fase 6: Inventario virtualizado e iconos (Implementada - Testing pendiente hasta generar todos los íconos de las armas)
+## Fase 6: Inventario virtualizado e iconos (Implementada - Testing pendiente hasta generar todos los Ã­conos de las armas)
 
 ### `IconCacheService.cs`
 
-* `[x]` Crear la caché LRU.
+* `[x]` Crear la cachÃ© LRU.
 * `[x]` Agregar soporte de `CancellationToken`.
 * `[x]` Compartir una misma carga cuando varias celdas soliciten el mismo icono.
-* `[x]` Evitar que un icono tardío se asigne a una celda reciclada.
-* `[x]` Limitar la caché por cantidad de iconos.
-* `[x]` Limitar la caché por presupuesto aproximado de memoria.
+* `[x]` Evitar que un icono tardÃ­o se asigne a una celda reciclada.
+* `[x]` Limitar la cachÃ© por cantidad de iconos.
+* `[x]` Limitar la cachÃ© por presupuesto aproximado de memoria.
 * `[x]` Liberar solamente entradas sin usuarios activos.
 * `[x]` Mostrar placeholder mientras carga.
 * `[x]` Mostrar placeholder definitivo si la carga falla.
@@ -148,7 +148,7 @@ List<EquippedWeaponSlotData> equippedWeapons;
 
 * `[x]` Separar responsabilidades: `WeaponInventoryUI` solo maneja la grilla, `WeaponSlotCell` maneja la celda.
 * `[x]` Escuchar cambios en `PlayerData.inventory.ownedWeapons` para refrescar celdas.
-* `[x]` Instanciar `WeaponSlotCell` desde un prefab por cada arma poseída.
+* `[x]` Instanciar `WeaponSlotCell` desde un prefab por cada arma poseÃ­da.
 
 ### `WeaponSlotCell.cs`
 
@@ -166,12 +166,12 @@ List<EquippedWeaponSlotData> equippedWeapons;
 ### `WeaponPreviewService.cs`
 
 * `[x]` Crear servicio con un `PreviewRoot` en la capa `WeaponPreview`.
-* `[x]` Configurar cámara exclusiva (cullingMask) y enviar a `RenderTexture`.
+* `[x]` Configurar cÃ¡mara exclusiva (cullingMask) y enviar a `RenderTexture`.
 * `[x]` Cargar y liberar usando `WeaponAssetService`.
 * `[x]` Proteger estado con `previewRequestVersion` (invalidar solicitudes anteriores; si una carga obsoleta termina, liberar inmediatamente su instancia).
 * `[x]` Mantener modelo viejo activo hasta que el nuevo termine de cargar.
 * `[x]` Aplicar `WeaponVisualConfig` (`previewPosition`, `previewRotation`, `previewScale`).
-* `[x]` Al cerrar inventario: liberar modelo, desactivar cámara y liberar la `RenderTexture` con `RenderTexture.Release()`.
+* `[x]` Al cerrar inventario: liberar modelo, desactivar cÃ¡mara y liberar la `RenderTexture` con `RenderTexture.Release()`.
 
 ### `WeaponPreviewInputHandler.cs`
 
@@ -180,12 +180,12 @@ List<EquippedWeaponSlotData> equippedWeapons;
 
 ### Pruebas Faltantes (Fase 7)
 
-* `[x]` `ReleaseWeaponInstance` destruye el clon y reduce el conteo en `WeaponAssetService`. (Comprobado por código)
-* `[x]` El modelo anterior permanece visible hasta que el nuevo termine de cargar. (Comprobado por código)
-* `[x]` `HidePreview()` puede ejecutarse dos veces sin errores. (Comprobado por código)
-* `[x]` Solo destruye la `RenderTexture` si fue creada por código. (Comprobado por código)
-* `[x]` Al cerrar durante una carga, el modelo tardío se libera. (Comprobado por código)
-* `[x]` Pruebas A → B → C rápidas, clave inexistente y abrir/cerrar repetidamente pasan en el Profiler. (Validado por ti al probar UI)
+* `[x]` `ReleaseWeaponInstance` destruye el clon y reduce el conteo en `WeaponAssetService`. (Comprobado por cÃ³digo)
+* `[x]` El modelo anterior permanece visible hasta que el nuevo termine de cargar. (Comprobado por cÃ³digo)
+* `[x]` `HidePreview()` puede ejecutarse dos veces sin errores. (Comprobado por cÃ³digo)
+* `[x]` Solo destruye la `RenderTexture` si fue creada por cÃ³digo. (Comprobado por cÃ³digo)
+* `[x]` Al cerrar durante una carga, el modelo tardÃ­o se libera. (Comprobado por cÃ³digo)
+* `[x]` Pruebas A â†’ B â†’ C rÃ¡pidas, clave inexistente y abrir/cerrar repetidamente pasan en el Profiler. (Validado por ti al probar UI)
 * `[ ]` Reutilizar el servicio para inventario, tienda, recompensa de huevo y gacha (Queda abierto para aplicarlo en el futuro).
   * tienda
   * recompensa de huevo
@@ -193,38 +193,9 @@ List<EquippedWeaponSlotData> equippedWeapons;
 
 ---
 
-## Fase 8: Estadísticas de combate en ejecución
-
-### `WeaponRuntimeStats.cs`
-
-* `[x]` Crear `WeaponRuntimeStats`.
-* `[x]` Crear la estructura inicial de cálculo de daño y cooldown.
-* `[x]` Confirmar que combina correctamente:
-
-  * `WeaponData`
-  * `WeaponInstanceData`
-  * nivel
-  * enhancement
-  * encantamientos
-  * buffs temporales
-* `[x]` Preparar o validar campos para:
-
-  * daño final
-  * attack speed
-  * cooldown
-  * rango
-  * velocidad de desplazamiento
-  * efectos mágicos
-  * efectos pasivos
-* `[x]` Permitir recalcular estadísticas sin volver a cargar el modelo 3D.
-* `[x]` Mantener el estado temporal fuera de `WeaponData`.
-
----
-
-## Fase 9: Sistema de armas compañeras
+## Fase 8: Arquitectura y Sincronización Visual de Compañeras (Tested OK)
 
 ### `WeaponOrbitVisualController.cs`
-
 * `[x]` Crear el controlador orbital.
 * `[x]` Calcular posiciones base según la cantidad de armas.
 * `[x]` Reutilizar o portar completamente el algoritmo orbital anterior.
@@ -236,61 +207,57 @@ List<EquippedWeaponSlotData> equippedWeapons;
 * `[x]` Confirmar que no selecciona objetivos.
 * `[x]` Confirmar que no carga Addressables directamente.
 
-### `WeaponCompanionAgent.cs`
+### `WeaponCompanionManager.cs`
+* `[x]` Crear el manager.
+* `[x]` Mantener la lista de agentes.
+* `[x]` Crear un agente por cada instancia equipada.
+* `[x]` Retirar el agente correspondiente al desequipar.
+* `[x]` Actualizar la formación cuando cambia el equipo.
 
+### `PlayerCombat.cs`
+* `[x]` Limpiar la implementación anterior.
+* `[x]` Confirmar que ya no usa `Resources.Load`.
+* `[x]` Confirmar que ya no carga Addressables directamente.
+* `[x]` Confirmar que ya no mueve las armas orbitales directamente.
+* `[x]` Eliminar código legado después de validar el nuevo combate.
+
+### `WeaponCompanionAgent.cs` (Base)
 * `[x]` Crear un agente independiente por arma.
-* `[x]` Implementar la máquina de estados inicial.
-* `[x]` Confirmar los estados:
+* `[x]` Liberar correctamente su visual al destruirse.
+* `[x]` Mantener: `instanceId`, `weaponId`, visual propio, posición orbital asignada.
 
-  * `Orbiting`
-  * `MovingToTarget`
-  * `Attacking`
-  * `Returning`
-* `[x]` Mantener:
+---
 
-  * `instanceId`
-  * `weaponId`
-  * `WeaponRuntimeStats`
-  * target actual
-  * visual propio
-  * posición orbital asignada
+## Fase 9: Lógica de Combate y Estadísticas de Ejecución
+
+### `WeaponRuntimeStats.cs`
+* `[x]` Crear la estructura completa de cálculo de daño y cooldown.
+* `[x]` Confirmar que combina correctamente: Nivel, Enhancement, Buffs Temporales.
+* `[x]` Preparar campos para: Daño final, Attack speed, Cooldown, Rango, Velocidad de desplazamiento.
+* `[x]` Permitir recalcular estadísticas en caliente sin volver a cargar el modelo 3D.
+
+### `WeaponCompanionManager.cs` (Combate)
+* `[x]` Recibir targets y órdenes de ataque.
+* `[x]` Propagar la orden a las armas.
+* `[x]` Confirmar que todas reciben el mismo target.
+* `[x]` Cancelar el ataque cuando: muere el objetivo, desaparece el objetivo, se cancela la orden, queda fuera del rango permitido.
+* `[x]` Ordenar a todas las armas que regresen a la órbita.
+
+### `PlayerCombat.cs` (Combate)
+* `[x]` Delegar la lógica al `WeaponCompanionManager`.
+* `[x]` Confirmar que ya no suma todo el daño como un único golpe.
+* `[x]` Mantener únicamente selección de target y despacho de órdenes.
+
+### `WeaponCompanionAgent.cs` (Combate Real)
+* `[x]` Implementar la máquina de estados inicial y confirmarlos (`Orbiting`, `MovingToTarget`, `Attacking`, `Returning`).
+* `[x]` Mantener: `WeaponRuntimeStats`, target actual.
 * `[x]` Moverse desde la órbita hasta el objetivo.
 * `[x]` Atacar según su propio attack speed y cooldown.
-* `[x]` Aplicar daño individualmente.
+* `[x]` Aplicar daño individualmente a la entidad Enemy.
 * `[x]` Preparar efectos mágicos y pasivas.
 * `[x]` Regresar a su posición orbital.
 * `[x]` Manejar que el objetivo muera durante el movimiento.
 * `[x]` Manejar desequipado durante el ataque.
-* `[x]` Liberar correctamente su visual al destruirse.
-
-### `WeaponCompanionManager.cs`
-
-* `[x]` Crear el manager.
-* `[x]` Mantener la lista de agentes.
-* `[x]` Recibir targets y órdenes de ataque.
-* `[x]` Propagar la orden a las armas.
-* `[x]` Confirmar que todas reciben el mismo target.
-* `[x]` Crear un agente por cada instancia equipada.
-* `[x]` Retirar el agente correspondiente al desequipar.
-* `[x]` Cancelar el ataque cuando:
-
-  * muere el objetivo
-  * desaparece el objetivo
-  * se cancela la orden
-  * queda fuera del rango permitido
-* `[x]` Ordenar a todas las armas que regresen a la órbita.
-* `[x]` Actualizar la formación cuando cambia el equipo.
-
-### `PlayerCombat.cs`
-
-* `[x]` Limpiar la implementación anterior.
-* `[x]` Delegar la lógica al `WeaponCompanionManager`.
-* `[x]` Confirmar que ya no usa `Resources.Load`.
-* `[x]` Confirmar que ya no carga Addressables directamente.
-* `[x]` Confirmar que ya no mueve las armas orbitales directamente.
-* `[x]` Confirmar que ya no suma todo el daño como un único golpe.
-* `[x]` Mantener únicamente selección de target y despacho de órdenes.
-* `[x]` Eliminar código legado después de validar el nuevo combate.
 
 ---
 
@@ -308,26 +275,26 @@ List<EquippedWeaponSlotData> equippedWeapons;
 
 ### Otras integraciones
 
-* `[ ]` Revisar tiendas, cofres, recompensas y drops que todavía entreguen IDs antiguos.
+* `[ ]` Revisar tiendas, cofres, recompensas y drops que todavÃ­a entreguen IDs antiguos.
 * `[ ]` Migrar cualquier sistema que siga usando `WeaponDatabase`.
 * `[ ]` Migrar cualquier sistema que guarde armas mediante nombres o IDs de texto.
 
 ---
 
-## Fase 11: Herramientas de Editor y validación
+## Fase 11: Herramientas de Editor y validaciÃ³n
 
 ### `WeaponDatabaseEditor.cs`
 
-* `[ ]` Actualizarlo para utilizar el catálogo JSON.
+* `[ ]` Actualizarlo para utilizar el catÃ¡logo JSON.
 * `[ ]` O retirarlo si ya no aporta valor.
-* `[ ]` Preparar exportación de datos si se mantiene una herramienta visual.
+* `[ ]` Preparar exportaciÃ³n de datos si se mantiene una herramienta visual.
 
 ### `WeaponPreFlightCheck.cs`
 
-* `[ ]` Crear la herramienta de validación.
+* `[ ]` Crear la herramienta de validaciÃ³n.
 * `[ ]` Validar:
 
-  * IDs únicos
+  * IDs Ãºnicos
   * campos obligatorios
   * `visualKey`
   * `iconKey`
@@ -336,13 +303,13 @@ List<EquippedWeaponSlotData> equippedWeapons;
   * `WeaponVisualConfig`
   * rareza
   * tipo de arma
-* `[ ]` Bloquear exportación o publicación si hay errores.
+* `[ ]` Bloquear exportaciÃ³n o publicaciÃ³n si hay errores.
 
 ---
 
 ## Fase 12: Pruebas del sistema
 
-### Catálogo e inventario
+### CatÃ¡logo e inventario
 
 * `[ ]` Crear dos copias del mismo `weaponId` con GUID diferentes.
 * `[ ]` Guardar y cargar correctamente ambas instancias.
@@ -354,42 +321,42 @@ List<EquippedWeaponSlotData> equippedWeapons;
 
 * `[ ]` Varias armas con el mismo `visualKey` comparten un solo handle.
 * `[ ]` Cada arma conserva una instancia visual independiente.
-* `[ ]` El handle se libera al retirar la última instancia.
+* `[ ]` El handle se libera al retirar la Ãºltima instancia.
 * `[ ]` Una clave inexistente muestra placeholder.
 * `[ ]` Cambiar de escena no deja handles activos.
-* `[ ]` Una solicitud obsoleta no crea un visual tardío.
+* `[ ]` Una solicitud obsoleta no crea un visual tardÃ­o.
 * `[ ]` Repetir equipamiento y desequipamiento sin crecimiento progresivo de memoria.
 
 ### UI
 
 * `[ ]` Crear `TestInventoryUI.cs`.
-* `[ ]` Probar scroll rápido por 500 entradas.
+* `[ ]` Probar scroll rÃ¡pido por 500 entradas.
 * `[ ]` Confirmar que la memoria permanece estable.
 * `[ ]` Confirmar que dos celdas comparten la misma carga.
 * `[ ]` Confirmar que una celda reciclada no recibe un icono anterior.
 * `[ ]` Cerrar el inventario durante una carga.
 * `[ ]` Confirmar placeholders de carga y error.
 
-### Compañeros
+### CompaÃ±eros
 
 * `[ ]` Probar formaciones de 1 a 15 armas.
 * `[ ]` Equipar tres copias de la misma espada.
-* `[ ]` Confirmar que todas reciben el mismo target.
-* `[ ]` Confirmar que cada arma ataca con su propio daño.
+* `[x]` Confirmar que todas reciben el mismo target.
+* `[ ]` Confirmar que cada arma ataca con su propio daÃ±o.
 * `[ ]` Confirmar que cada arma utiliza su propio attack speed.
-* `[ ]` Confirmar que el daño no se aplica como un único golpe global.
+* `[ ]` Confirmar que el daÃ±o no se aplica como un Ãºnico golpe global.
 * `[ ]` Matar el objetivo y comprobar que todas regresan.
 * `[ ]` Cancelar el target y comprobar el regreso.
-* `[ ]` Desequipar una arma mientras está atacando.
+* `[ ]` Desequipar una arma mientras estÃ¡ atacando.
 * `[ ]` Equipar una arma durante el combate.
-* `[ ]` Cambiar la cantidad de armas y recalcular la formación.
+* `[ ]` Cambiar la cantidad de armas y recalcular la formaciÃ³n.
 * `[ ]` Confirmar que no hay fugas de agentes, modelos ni handles.
 
 ---
 
-## Fase 13: VPS y LiveOps — Pausada
+## Fase 13: VPS y LiveOps â€” Pausada
 
-No se implementará todavía, pero la arquitectura queda preparada.
+No se implementarÃ¡ todavÃ­a, pero la arquitectura queda preparada.
 
 * `[x]` Crear `IWeaponCatalogSource` para desacoplar el origen de los datos.
 * `[x]` Mantener `WeaponCatalogService` independiente del JSON local.
@@ -398,15 +365,19 @@ No se implementará todavía, pero la arquitectura queda preparada.
 * `[ ]` Crear `HttpWeaponCatalogSource` cuando exista la API.
 * `[ ]` Crear `ContentVersionService`.
 * `[ ]` Crear manifiesto de compatibilidad.
-* `[ ]` Mover la generación y validación de `instanceId` al servidor.
-* `[ ]` Validar daño, cooldown, target y recompensas en el VPS.
+* `[ ]` Mover la generaciÃ³n y validaciÃ³n de `instanceId` al servidor.
+* `[ ]` Validar daÃ±o, cooldown, target y recompensas en el VPS.
 * `[ ]` Configurar Addressables remotos.
-* `[ ]` Implementar publicación y rollback.
+* `[ ]` Implementar publicaciÃ³n y rollback.
 
 Por ahora:
 
 ```text
 LocalWeaponCatalogSource
-→ simula la futura respuesta del VPS
+â†’ simula la futura respuesta del VPS
 ```
+
+
+
+
 

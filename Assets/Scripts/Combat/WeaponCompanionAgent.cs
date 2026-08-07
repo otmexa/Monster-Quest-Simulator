@@ -39,7 +39,7 @@ namespace MonsterQuest.Combat
         private Vector3 idleOffset;
         private float orbitTime;
         private float orbitSpeed;
-        private Vector3 idleRotationOffset = new Vector3(0f, 90f, 90f);
+        private Vector3 idleRotationOffset = Vector3.zero; // Mejor default para modelos 3D
 
         // Combat Timers
         private float lastAttackTime = 0f;
@@ -90,7 +90,7 @@ namespace MonsterQuest.Combat
                     else
                     {
                         visualInstance.transform.localPosition = Vector3.zero;
-                        idleRotationOffset = new Vector3(0f, 90f, 90f);
+                        idleRotationOffset = Vector3.zero;
                         visualInstance.transform.localRotation = Quaternion.Euler(idleRotationOffset);
                         visualInstance.transform.localScale = Vector3.one;
                     }
@@ -103,7 +103,7 @@ namespace MonsterQuest.Combat
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"[WeaponCompanionAgent] Excepcin en LoadVisual: {ex}");
+                Debug.LogError($"[WeaponCompanionAgent] Excepcion en LoadVisual: {ex}");
                 if (this != null) visualState = WeaponVisualState.Failed;
             }
         }
@@ -115,18 +115,41 @@ namespace MonsterQuest.Combat
             orbitSpeed = speed;
         }
 
+        private enum StrikeState
+        {
+            None,
+            Thrust,
+            Recoil,
+            Wait
+        }
+        private StrikeState strikeState = StrikeState.None;
+        private float strikeTimer = 0f;
+        private Vector3 strikeStartPos;
+        private bool hasDealtDamage = false;
+
+        // Propiedades de la Orbita Atomica
+        private Vector3 atomOrbitAxis;
+        private float atomOrbitPhase;
+        private float atomOrbitRadius = 4f; // Confirmado: 4 unidades
+
         public void AssignTarget(Transform target)
         {
+            if (sharedTarget == target) return; // Evitar reiniciar el estado si es el mismo target
+
             sharedTarget = target;
             if (target != null)
             {
                 targetEnemy = target.GetComponent<Enemy>();
                 currentState = CompanionState.MovingToTarget;
+                strikeState = StrikeState.None;
+                
+                // Generar un eje tridimensional aleatorio para formar el "tomo"
+                atomOrbitAxis = Random.onUnitSphere;
+                atomOrbitPhase = Random.Range(0f, Mathf.PI * 2f);
             }
             else
             {
-                targetEnemy = null;
-                currentState = CompanionState.Returning;
+                ClearTarget();
             }
         }
 
@@ -135,6 +158,7 @@ namespace MonsterQuest.Combat
             sharedTarget = null;
             targetEnemy = null;
             currentState = CompanionState.Returning;
+            strikeState = StrikeState.None;
         }
 
         void Update()
@@ -184,6 +208,34 @@ namespace MonsterQuest.Combat
             }
         }
 
+        private Vector3 GetAtomOrbitPosition()
+        {
+            if (sharedTarget == null) return transform.position;
+            
+            atomOrbitPhase += Time.deltaTime * 2.5f; // Velocidad de giro del atomo
+            
+            Vector3 perpendicular1 = Vector3.Cross(atomOrbitAxis, Vector3.up);
+            if (perpendicular1 == Vector3.zero) perpendicular1 = Vector3.right;
+            perpendicular1.Normalize();
+            Vector3 perpendicular2 = Vector3.Cross(atomOrbitAxis, perpendicular1).normalized;
+
+            Vector3 offset = (perpendicular1 * Mathf.Cos(atomOrbitPhase) + perpendicular2 * Mathf.Sin(atomOrbitPhase)) * atomOrbitRadius;
+            return sharedTarget.position + offset + Vector3.up * 1f; // Elevar ligeramente para apuntar al torso
+        }
+
+        // Ease In/Out para movimientos mas organicos
+        private float EaseInOutQuad(float t)
+        {
+            return t < 0.5f ? 2f * t * t : 1f - Mathf.Pow(-2f * t + 2f, 2f) / 2f;
+        }
+
+        private float EaseInBack(float t)
+        {
+            float c1 = 1.70158f;
+            float c3 = c1 + 1f;
+            return c3 * t * t * t - c1 * t * t; // Da un efecto de "tomar vuelo" hacia atras antes de lanzarse
+        }
+
         private void UpdateMovementToTarget()
         {
             if (sharedTarget == null || (targetEnemy != null && targetEnemy.IsDead()))
@@ -192,17 +244,19 @@ namespace MonsterQuest.Combat
                 return;
             }
 
-            Vector3 direction = (sharedTarget.position - transform.position).normalized;
-            float distance = Vector3.Distance(transform.position, sharedTarget.position);
+            Vector3 targetAtomPos = GetAtomOrbitPosition();
+            float distanceToEnemy = Vector3.Distance(transform.position, sharedTarget.position);
 
-            if (distance <= Stats.range)
+            if (distanceToEnemy <= atomOrbitRadius * 1.5f) // Entramos en rango de orbita
             {
                 currentState = CompanionState.Attacking;
+                strikeState = StrikeState.None;
             }
             else
             {
-                // Moverse hacia el objetivo (independiente del jugador)
-                transform.position = Vector3.MoveTowards(transform.position, sharedTarget.position, 15f * Time.deltaTime);
+                // Moverse hacia la orbita atomica
+                transform.position = Vector3.MoveTowards(transform.position, targetAtomPos, Stats.moveSpeed * Time.deltaTime);
+                Vector3 direction = (sharedTarget.position - transform.position).normalized;
                 if (direction != Vector3.zero)
                 {
                     Quaternion targetRot = Quaternion.LookRotation(direction) * Quaternion.Euler(idleRotationOffset);
@@ -213,43 +267,109 @@ namespace MonsterQuest.Combat
 
         private void UpdateAttacking()
         {
+            // Cancelacion inmediata
             if (sharedTarget == null || (targetEnemy != null && targetEnemy.IsDead()))
             {
                 ClearTarget();
                 return;
             }
 
-            float distance = Vector3.Distance(transform.position, sharedTarget.position);
-            if (distance > Stats.range)
-            {
-                currentState = CompanionState.MovingToTarget;
-                return;
-            }
+            // Timing
+            float totalInterval = Stats.attackInterval;
+            float thrustDuration = totalInterval * 0.20f;
+            float recoilDuration = totalInterval * 0.40f;
+            float waitDuration = totalInterval * 0.40f;
 
-            // Animación / Visual de ataque
-            Vector3 direction = (sharedTarget.position - transform.position).normalized;
-            if (direction != Vector3.zero)
+            if (strikeState == StrikeState.None || strikeState == StrikeState.Wait)
             {
-                Quaternion targetRot = Quaternion.LookRotation(direction) * Quaternion.Euler(idleRotationOffset);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 15f * Time.deltaTime);
-            }
-
-            if (Time.time >= lastAttackTime + Stats.cooldown)
-            {
-                PerformStrike();
-                lastAttackTime = Time.time;
-            }
-        }
-
-        private void PerformStrike()
-        {
-            if (targetEnemy != null && !targetEnemy.IsDead())
-            {
-                // Daño individual usando sus runtime stats
-                targetEnemy.TakeDamage(Stats.finalDamage);
+                // Orbitando el atomo
+                Vector3 targetAtomPos = GetAtomOrbitPosition();
                 
-                // Efecto visual básico de empuje hacia adelante
-                transform.position += transform.forward * 1.5f;
+                // Lerp suave para perseguir el objetivo sin saltos bruscos
+                transform.position = Vector3.Lerp(transform.position, targetAtomPos, 12f * Time.deltaTime);
+                
+                Vector3 direction = (sharedTarget.position - transform.position).normalized;
+                if (direction != Vector3.zero)
+                {
+                    Quaternion targetRot = Quaternion.LookRotation(direction) * Quaternion.Euler(idleRotationOffset);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 15f * Time.deltaTime);
+                }
+
+                if (strikeState == StrikeState.Wait)
+                {
+                    strikeTimer += Time.deltaTime;
+                    if (strikeTimer >= waitDuration)
+                    {
+                        strikeState = StrikeState.Thrust;
+                        strikeTimer = 0f;
+                        strikeStartPos = transform.position;
+                        hasDealtDamage = false;
+                    }
+                }
+                else
+                {
+                    // Primera vez, empezamos el ataque inmediatamente
+                    strikeState = StrikeState.Thrust;
+                    strikeTimer = 0f;
+                    strikeStartPos = transform.position;
+                    hasDealtDamage = false;
+                }
+            }
+            else if (strikeState == StrikeState.Thrust)
+            {
+                strikeTimer += Time.deltaTime;
+                float t = Mathf.Clamp01(strikeTimer / thrustDuration);
+                
+                // Usamos EaseInBack para que haga un pequeo retroceso natural antes de lanzarse
+                float organicT = EaseInBack(t); 
+                
+                Vector3 targetThrustPos = sharedTarget.position + Vector3.up * 1f; // Centro del enemigo
+                transform.position = Vector3.LerpUnclamped(strikeStartPos, targetThrustPos, organicT);
+
+                // Rotacion precisa durante el empuje
+                Vector3 direction = (targetThrustPos - strikeStartPos).normalized;
+                if (direction != Vector3.zero)
+                {
+                    transform.rotation = Quaternion.LookRotation(direction) * Quaternion.Euler(idleRotationOffset);
+                }
+
+                if (t >= 1f)
+                {
+                    if (!hasDealtDamage && targetEnemy != null && !targetEnemy.IsDead())
+                    {
+                        targetEnemy.TakeDamage(Stats.finalDamage);
+                        hasDealtDamage = true;
+                    }
+                    
+                    strikeState = StrikeState.Recoil;
+                    strikeTimer = 0f;
+                    strikeStartPos = transform.position;
+                }
+            }
+            else if (strikeState == StrikeState.Recoil)
+            {
+                strikeTimer += Time.deltaTime;
+                float t = Mathf.Clamp01(strikeTimer / recoilDuration);
+                
+                // EaseInOut para un regreso suave a la orbita atomica
+                float organicT = EaseInOutQuad(t);
+                
+                Vector3 targetAtomPos = GetAtomOrbitPosition(); 
+                transform.position = Vector3.Lerp(strikeStartPos, targetAtomPos, organicT);
+
+                // Rotar para no perder de vista al enemigo
+                Vector3 direction = (sharedTarget.position - transform.position).normalized;
+                if (direction != Vector3.zero)
+                {
+                    Quaternion targetRot = Quaternion.LookRotation(direction) * Quaternion.Euler(idleRotationOffset);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 10f * Time.deltaTime);
+                }
+
+                if (t >= 1f)
+                {
+                    strikeState = StrikeState.Wait;
+                    strikeTimer = 0f;
+                }
             }
         }
 
@@ -263,7 +383,7 @@ namespace MonsterQuest.Combat
             Vector3 targetPos = parentPos + parentRot * idleOffset;
             float distance = Vector3.Distance(transform.position, targetPos);
 
-            transform.position = Vector3.MoveTowards(transform.position, targetPos, 20f * Time.deltaTime);
+            transform.position = Vector3.MoveTowards(transform.position, targetPos, 25f * Time.deltaTime);
             
             Quaternion targetRot = parentRot * Quaternion.Euler(idleRotationOffset);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 15f * Time.deltaTime);

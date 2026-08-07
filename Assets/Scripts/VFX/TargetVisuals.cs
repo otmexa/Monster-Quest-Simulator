@@ -6,8 +6,13 @@ public class TargetVisuals : MonoBehaviour
     private GameObject primaryCircle;
     private GameObject queuedCircle;
 
+    [SerializeField] private Material primaryDecalMaterial;
+    [SerializeField] private Material queuedDecalMaterial;
+
     private GameObject CreateCircle(Transform parent, Material decalMat, float size)
     {
+        if (decalMat == null) return null;
+
         GameObject circleObj = new GameObject("TargetCircle");
         circleObj.transform.SetParent(parent);
         
@@ -28,8 +33,7 @@ public class TargetVisuals : MonoBehaviour
         ClearPrimaryTarget();
         if (target != null)
         {
-            Material greenMat = Resources.Load<Material>("TargetPrimaryDecal");
-            primaryCircle = CreateCircle(target, greenMat, 3f);
+            primaryCircle = CreateCircle(target, primaryDecalMaterial, 3f);
         }
     }
 
@@ -38,8 +42,7 @@ public class TargetVisuals : MonoBehaviour
         ClearQueuedTarget();
         if (target != null)
         {
-            Material orangeMat = Resources.Load<Material>("TargetQueuedDecal");
-            queuedCircle = CreateCircle(target, orangeMat, 2.5f);
+            queuedCircle = CreateCircle(target, queuedDecalMaterial, 2.5f);
         }
     }
 

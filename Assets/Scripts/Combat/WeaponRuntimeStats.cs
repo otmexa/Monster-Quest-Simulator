@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace MonsterQuest.Combat
 {
@@ -10,36 +11,53 @@ namespace MonsterQuest.Combat
     {
         public int finalDamage;
         public float attackSpeed; // Attacks per second
-        public float cooldown;    // Time between attacks
-        public float range;
+        public float attackInterval; // Time between attacks (1f / attackSpeed)
+        public float attackRange;
+        public float moveSpeed;
         
         // Efectos futuros
-        public bool hasLifesteal;
-        public float critChance;
-        public float critMultiplier;
+        public string[] effectIds;
+        public string[] passiveEffectIds;
 
-        public WeaponRuntimeStats(int baseDamage, float baseAttackSpeed = 1f, float baseRange = 3f)
+        public WeaponRuntimeStats(int baseDamage, float baseAttackSpeed = 1f, float baseRange = 3f, float baseMoveSpeed = 15f)
         {
             finalDamage = baseDamage;
-            attackSpeed = baseAttackSpeed;
-            cooldown = 1f / baseAttackSpeed;
-            range = baseRange;
+            attackSpeed = baseAttackSpeed > 0 ? baseAttackSpeed : 1f;
+            attackInterval = 1f / attackSpeed;
+            attackRange = baseRange;
+            moveSpeed = baseMoveSpeed;
             
-            hasLifesteal = false;
-            critChance = 0.05f;
-            critMultiplier = 1.5f;
+            effectIds = Array.Empty<string>();
+            passiveEffectIds = Array.Empty<string>();
         }
 
-        public void ApplyLevelBonus(int level)
+        public void ApplyLevelAndEnhancement(int level, int enhancementLevel)
         {
-            finalDamage += (level - 1) * 2; // Ejemplo: +2 daño por nivel
+            // Escala de daño base: +2 por nivel
+            float damage = finalDamage + ((level - 1) * 2f);
+            
+            // Enhancement: +10% de daño multiplicativo por nivel de enhancement
+            damage = damage * (1f + (enhancementLevel * 0.1f));
+
+            finalDamage = Mathf.RoundToInt(damage);
         }
 
         public static WeaponRuntimeStats Calculate(MonsterQuest.Data.WeaponData catalogData, MonsterQuest.Data.WeaponInstanceData instanceData)
         {
-            WeaponRuntimeStats stats = new WeaponRuntimeStats(catalogData.damage, 1f, 3f);
-            stats.ApplyLevelBonus(instanceData.level);
-            // Aquí se pueden aplicar más modificadores de instanceData.enhancement etc.
+            // Inicializar con valores base del catálogo (o defaults si faltan en el json)
+            // Se asume attackSpeed de 1 y rango 3 como estándar.
+            WeaponRuntimeStats stats = new WeaponRuntimeStats(
+                catalogData.damage, 
+                baseAttackSpeed: 1f, 
+                baseRange: 3f, 
+                baseMoveSpeed: 15f
+            );
+            
+            // Aplicar modificadores del WeaponInstanceData
+            stats.ApplyLevelAndEnhancement(instanceData.level, instanceData.enhancement);
+            
+            // Futuro: Aplicar encantamientos o buffs temporales aquí
+            
             return stats;
         }
     }
