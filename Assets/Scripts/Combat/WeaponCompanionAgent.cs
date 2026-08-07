@@ -156,6 +156,8 @@ namespace MonsterQuest.Combat
             }
         }
 
+        private bool isFirstOrbitFrame = true;
+
         private void UpdateOrbit()
         {
             if (transform.parent == null) return;
@@ -167,10 +169,19 @@ namespace MonsterQuest.Combat
             Quaternion parentRot = transform.parent.rotation;
 
             Vector3 targetPos = parentPos + parentRot * (idleOffset + new Vector3(0, yOffset, 0));
-            transform.position = Vector3.Lerp(transform.position, targetPos, 10f * Time.deltaTime);
+            Quaternion targetRotQuat = parentRot * Quaternion.Euler(idleRotationOffset);
 
-            Quaternion targetRot = parentRot * Quaternion.Euler(idleRotationOffset);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 10f * Time.deltaTime);
+            if (isFirstOrbitFrame)
+            {
+                transform.position = targetPos;
+                transform.rotation = targetRotQuat;
+                isFirstOrbitFrame = false;
+            }
+            else
+            {
+                transform.position = Vector3.Lerp(transform.position, targetPos, 10f * Time.deltaTime);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotQuat, 10f * Time.deltaTime);
+            }
         }
 
         private void UpdateMovementToTarget()

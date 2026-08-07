@@ -13,7 +13,7 @@ namespace MonsterQuest.UI
         public GameObject leftHUDPanel;
         public static WeaponInventoryUI Instance { get; private set; }
 
-        public GameObject slotPrefab;
+        public GameObject weaponSlotPrefab;
         public Transform gridContainer;
         public Sprite placeholderSprite;
         public GameObject weaponDetailsPanel;
@@ -36,7 +36,6 @@ namespace MonsterQuest.UI
         private MonsterQuest.Inventory.PlayerInventory localPlayerInventory;
         
         public RawImage previewImage;
-        public GameObject leftHUDPanel;
         public GameObject weaponsPopupPanel;
         public Button btnOpenWeapons;
         public Button btnSell;
@@ -246,7 +245,9 @@ namespace MonsterQuest.UI
                     handler = previewImage.gameObject.AddComponent<WeaponPreviewInputHandler>();
                 }
             }
-               void OnEquipClicked()
+        }
+
+        void OnEquipClicked()
         {
             if (selectedWeapon == null) return;
 

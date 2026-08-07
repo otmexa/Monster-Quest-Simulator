@@ -199,7 +199,7 @@ List<EquippedWeaponSlotData> equippedWeapons;
 
 * `[x]` Crear `WeaponRuntimeStats`.
 * `[x]` Crear la estructura inicial de cálculo de daño y cooldown.
-* `[ ]` Confirmar que combina correctamente:
+* `[x]` Confirmar que combina correctamente:
 
   * `WeaponData`
   * `WeaponInstanceData`
@@ -207,7 +207,7 @@ List<EquippedWeaponSlotData> equippedWeapons;
   * enhancement
   * encantamientos
   * buffs temporales
-* `[ ]` Preparar o validar campos para:
+* `[x]` Preparar o validar campos para:
 
   * daño final
   * attack speed
@@ -216,8 +216,8 @@ List<EquippedWeaponSlotData> equippedWeapons;
   * velocidad de desplazamiento
   * efectos mágicos
   * efectos pasivos
-* `[ ]` Permitir recalcular estadísticas sin volver a cargar el modelo 3D.
-* `[ ]` Mantener el estado temporal fuera de `WeaponData`.
+* `[x]` Permitir recalcular estadísticas sin volver a cargar el modelo 3D.
+* `[x]` Mantener el estado temporal fuera de `WeaponData`.
 
 ---
 
@@ -227,26 +227,26 @@ List<EquippedWeaponSlotData> equippedWeapons;
 
 * `[x]` Crear el controlador orbital.
 * `[x]` Calcular posiciones base según la cantidad de armas.
-* `[ ]` Reutilizar o portar completamente el algoritmo orbital anterior.
-* `[ ]` Probar formaciones de 1 a 15 armas.
-* `[ ]` Recalcular la formación al equipar o desequipar.
-* `[ ]` Asignar un offset orbital a cada agente.
-* `[ ]` Reacomodar suavemente las armas existentes.
-* `[ ]` Confirmar que no calcula daño.
-* `[ ]` Confirmar que no selecciona objetivos.
-* `[ ]` Confirmar que no carga Addressables directamente.
+* `[x]` Reutilizar o portar completamente el algoritmo orbital anterior.
+* `[x]` Probar formaciones de 1 a 15 armas.
+* `[x]` Recalcular la formación al equipar o desequipar.
+* `[x]` Asignar un offset orbital a cada agente.
+* `[x]` Reacomodar suavemente las armas existentes.
+* `[x]` Confirmar que no calcula daño.
+* `[x]` Confirmar que no selecciona objetivos.
+* `[x]` Confirmar que no carga Addressables directamente.
 
 ### `WeaponCompanionAgent.cs`
 
 * `[x]` Crear un agente independiente por arma.
 * `[x]` Implementar la máquina de estados inicial.
-* `[ ]` Confirmar los estados:
+* `[x]` Confirmar los estados:
 
   * `Orbiting`
   * `MovingToTarget`
   * `Attacking`
   * `Returning`
-* `[ ]` Mantener:
+* `[x]` Mantener:
 
   * `instanceId`
   * `weaponId`
@@ -254,14 +254,14 @@ List<EquippedWeaponSlotData> equippedWeapons;
   * target actual
   * visual propio
   * posición orbital asignada
-* `[ ]` Moverse desde la órbita hasta el objetivo.
-* `[ ]` Atacar según su propio attack speed y cooldown.
-* `[ ]` Aplicar daño individualmente.
-* `[ ]` Preparar efectos mágicos y pasivas.
-* `[ ]` Regresar a su posición orbital.
-* `[ ]` Manejar que el objetivo muera durante el movimiento.
-* `[ ]` Manejar desequipado durante el ataque.
-* `[ ]` Liberar correctamente su visual al destruirse.
+* `[x]` Moverse desde la órbita hasta el objetivo.
+* `[x]` Atacar según su propio attack speed y cooldown.
+* `[x]` Aplicar daño individualmente.
+* `[x]` Preparar efectos mágicos y pasivas.
+* `[x]` Regresar a su posición orbital.
+* `[x]` Manejar que el objetivo muera durante el movimiento.
+* `[x]` Manejar desequipado durante el ataque.
+* `[x]` Liberar correctamente su visual al destruirse.
 
 ### `WeaponCompanionManager.cs`
 
@@ -269,28 +269,28 @@ List<EquippedWeaponSlotData> equippedWeapons;
 * `[x]` Mantener la lista de agentes.
 * `[x]` Recibir targets y órdenes de ataque.
 * `[x]` Propagar la orden a las armas.
-* `[ ]` Confirmar que todas reciben el mismo target.
-* `[ ]` Crear un agente por cada instancia equipada.
-* `[ ]` Retirar el agente correspondiente al desequipar.
-* `[ ]` Cancelar el ataque cuando:
+* `[x]` Confirmar que todas reciben el mismo target.
+* `[x]` Crear un agente por cada instancia equipada.
+* `[x]` Retirar el agente correspondiente al desequipar.
+* `[x]` Cancelar el ataque cuando:
 
   * muere el objetivo
   * desaparece el objetivo
   * se cancela la orden
   * queda fuera del rango permitido
-* `[ ]` Ordenar a todas las armas que regresen a la órbita.
-* `[ ]` Actualizar la formación cuando cambia el equipo.
+* `[x]` Ordenar a todas las armas que regresen a la órbita.
+* `[x]` Actualizar la formación cuando cambia el equipo.
 
 ### `PlayerCombat.cs`
 
 * `[x]` Limpiar la implementación anterior.
 * `[x]` Delegar la lógica al `WeaponCompanionManager`.
-* `[ ]` Confirmar que ya no usa `Resources.Load`.
-* `[ ]` Confirmar que ya no carga Addressables directamente.
-* `[ ]` Confirmar que ya no mueve las armas orbitales directamente.
-* `[ ]` Confirmar que ya no suma todo el daño como un único golpe.
-* `[ ]` Mantener únicamente selección de target y despacho de órdenes.
-* `[ ]` Eliminar código legado después de validar el nuevo combate.
+* `[x]` Confirmar que ya no usa `Resources.Load`.
+* `[x]` Confirmar que ya no carga Addressables directamente.
+* `[x]` Confirmar que ya no mueve las armas orbitales directamente.
+* `[x]` Confirmar que ya no suma todo el daño como un único golpe.
+* `[x]` Mantener únicamente selección de target y despacho de órdenes.
+* `[x]` Eliminar código legado después de validar el nuevo combate.
 
 ---
 
@@ -409,3 +409,4 @@ Por ahora:
 LocalWeaponCatalogSource
 → simula la futura respuesta del VPS
 ```
+

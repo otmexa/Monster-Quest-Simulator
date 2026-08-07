@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using System.Collections.Generic;
 using MonsterQuest.Data;
 using MonsterQuest.Inventory;
@@ -18,9 +19,37 @@ namespace MonsterQuest.Tests
         {
             if (!activeTest) return;
 
-            if (Input.GetKeyDown(KeyCode.T))
+            if (Keyboard.current != null)
             {
-                InjectTestWeapons(50);
+                if (Keyboard.current.tKey.wasPressedThisFrame)
+                {
+                    InjectTestWeapons(50);
+                }
+
+                if (Keyboard.current.uKey.isPressed)
+                {
+                    SpamEquipUnequip();
+                }
+            }
+        }
+
+        private void SpamEquipUnequip()
+        {
+            if (DataManager.Instance == null || DataManager.Instance.Data.inventory.ownedWeapons.Count == 0) return;
+            
+            var inv = FindFirstObjectByType<PlayerInventory>();
+            if (inv == null) return;
+
+            string instanceId = DataManager.Instance.Data.inventory.ownedWeapons[0].instanceId;
+            
+            // Si est equipada, la desequipa. Si no, la equipa. Lo hace mltiples veces por frame.
+            if (DataManager.Instance.Data.inventory.equippedWeapons.Exists(e => e.instanceId == instanceId))
+            {
+                inv.UnequipWeapon(instanceId);
+            }
+            else
+            {
+                inv.EquipWeapon(instanceId, 0);
             }
         }
 

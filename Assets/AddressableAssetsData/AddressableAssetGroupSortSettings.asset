@@ -12,4 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dea69d41f90c6ea4fa55c27c1d60c145, type: 3}
   m_Name: AddressableAssetGroupSortSettings
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.GroupSchemas.AddressableAssetGroupSortSettings
-  sortOrder: []
+  sortOrder:
+  - 46fbcc51209e99242a3b55bbc88d5217
+  - 93651784cad335c43b60b798307fab50
+  - 806f45ad1baa0dd49839c9d9cceda6eb

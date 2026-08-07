@@ -107,7 +107,7 @@ namespace MonsterQuest.Combat
             if (activeAgents.TryGetValue(instanceId, out WeaponCompanionAgent agent))
             {
                 WeaponInstanceData instData = inventory.GetWeapon(instanceId);
-                if (instData != null && WeaponCatalogService.TryGetWeapon(instData.weaponId, out WeaponData catalogData))
+                if (instData != null && WeaponCatalogService.TryGetWeapon(instData.weaponId, out MonsterQuest.Data.WeaponData catalogData))
                 {
                     WeaponRuntimeStats newStats = WeaponRuntimeStats.Calculate(catalogData, instData);
                     agent.UpdateRuntimeStats(newStats);
@@ -126,7 +126,7 @@ namespace MonsterQuest.Combat
                 WeaponInstanceData instData = inventory.GetWeapon(instanceId);
                 if (instData == null) return; // No es del jugador
 
-                if (WeaponCatalogService.TryGetWeapon(instData.weaponId, out WeaponData catalogData))
+                if (WeaponCatalogService.TryGetWeapon(instData.weaponId, out MonsterQuest.Data.WeaponData catalogData))
                 {
                     GameObject agentObj = new GameObject($"Companion_{catalogData.localizationKey}_{instanceId}");
                     agentObj.transform.SetParent(transform);

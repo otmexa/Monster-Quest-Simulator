@@ -73,55 +73,46 @@ namespace MonsterQuest.Services
 
             try
             {
-                AsyncOperationHandle<Sprite> handle;
-                try 
-                {
-                    handle = Addressables.LoadAssetAsync<Sprite>(iconKey);
-                }
-                catch (UnityEngine.AddressableAssets.InvalidKeyException)
-                {
-                    // El icono no existe en Addressables aún (Placeholder/Fase 6 pendiente)
-                    tcs.SetResult(null);
-                    ongoingLoads.Remove(iconKey);
-                    return null;
-                }
+                var locationsHandle = Addressables.LoadResourceLocationsAsync(iconKey);
+                await locationsHandle.Task;
 
-                await handle.Task;
-
-                if (handle.Status == AsyncOperationStatus.Succeeded && handle.Result != null)
+                if (locationsHandle.Status == AsyncOperationStatus.Succeeded && locationsHandle.Result.Count > 0)
                 {
-                    Sprite loadedSprite = handle.Result;
-                    
-                    // Añadir a caché y limpiar si es necesario
-                    EnforceLRUPolicy();
-                    
-                    cache[iconKey] = new CacheEntry
+                    AsyncOperationHandle<Sprite> handle = Addressables.LoadAssetAsync<Sprite>(iconKey);
+                    await handle.Task;
+
+                    if (handle.Status == AsyncOperationStatus.Succeeded && handle.Result != null)
                     {
-                        IconKey = iconKey,
-                        IconSprite = loadedSprite,
-                        Handle = handle,
-                        LastAccessTime = Time.realtimeSinceStartup
-                    };
+                        Sprite loadedSprite = handle.Result;
+                    
+                        // Añadir a caché y limpiar si es necesario
+                        EnforceLRUPolicy();
+                        
+                        cache[iconKey] = new CacheEntry
+                        {
+                            IconKey = iconKey,
+                            IconSprite = loadedSprite,
+                            Handle = handle,
+                            LastAccessTime = Time.realtimeSinceStartup
+                        };
 
-                    tcs.SetResult(loadedSprite);
-                    ongoingLoads.Remove(iconKey);
-                    
-                    if (cancellationToken.IsCancellationRequested) return null;
-                    return loadedSprite;
-                }
-                else
-                {
-                    Debug.LogWarning($"Fallo al cargar icono: {iconKey}. Intentando cargar placeholder.");
-                    Addressables.Release(handle);
-                    tcs.SetResult(null);
-                    ongoingLoads.Remove(iconKey);
-                    
-                    if (iconKey != "weapon.icon.placeholder")
-                    {
-                        return await GetIconAsync("weapon.icon.placeholder", cancellationToken);
+                        tcs.SetResult(loadedSprite);
+                        ongoingLoads.Remove(iconKey);
+                        
+                        if (cancellationToken.IsCancellationRequested) return null;
+                        return loadedSprite;
                     }
-                    return null;
                 }
+                
+                // Fallback (Location missing or load failed)
+                tcs.SetResult(null);
+                ongoingLoads.Remove(iconKey);
+                
+                if (iconKey != "weapon.icon.placeholder")
+                {
+                    return await GetIconAsync("weapon.icon.placeholder", cancellationToken);
+                }
+                return null;
             }
             catch (System.Exception ex)
             {
