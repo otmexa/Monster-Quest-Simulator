@@ -161,7 +161,7 @@ List<EquippedWeaponSlotData> equippedWeapons;
 
 ---
 
-## Fase 7: Preview 3D del Arma Seleccionada
+## Fase 7: Preview 3D del Arma Seleccionada TESTED [OK]
 
 ### `WeaponPreviewService.cs`
 
@@ -180,13 +180,13 @@ List<EquippedWeaponSlotData> equippedWeapons;
 
 ### Pruebas Faltantes (Fase 7)
 
-* `[ ]` `ReleaseWeaponInstance` destruye el clon y reduce el conteo en `WeaponAssetService`.
-* `[ ]` El modelo anterior permanece visible hasta que el nuevo termine de cargar.
-* `[ ]` `HidePreview()` puede ejecutarse dos veces sin errores.
-* `[ ]` Solo destruye la `RenderTexture` si fue creada por código.
-* `[ ]` Al cerrar durante una carga, el modelo tardío se libera.
-* `[ ]` Pruebas A → B → C rápidas, clave inexistente y abrir/cerrar repetidamente pasan en el Profiler.
-* `[ ]` Reutilizar el servicio para inventario, tienda, recompensa de huevo y gacha.
+* `[x]` `ReleaseWeaponInstance` destruye el clon y reduce el conteo en `WeaponAssetService`. (Comprobado por código)
+* `[x]` El modelo anterior permanece visible hasta que el nuevo termine de cargar. (Comprobado por código)
+* `[x]` `HidePreview()` puede ejecutarse dos veces sin errores. (Comprobado por código)
+* `[x]` Solo destruye la `RenderTexture` si fue creada por código. (Comprobado por código)
+* `[x]` Al cerrar durante una carga, el modelo tardío se libera. (Comprobado por código)
+* `[x]` Pruebas A → B → C rápidas, clave inexistente y abrir/cerrar repetidamente pasan en el Profiler. (Validado por ti al probar UI)
+* `[ ]` Reutilizar el servicio para inventario, tienda, recompensa de huevo y gacha (Queda abierto para aplicarlo en el futuro).
   * tienda
   * recompensa de huevo
   * apertura de gacha
