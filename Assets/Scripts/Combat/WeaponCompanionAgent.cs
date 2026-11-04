@@ -89,10 +89,8 @@ namespace MonsterQuest.Combat
                     }
                     else
                     {
-                        visualInstance.transform.localPosition = Vector3.zero;
-                        idleRotationOffset = Vector3.zero;
-                        visualInstance.transform.localRotation = Quaternion.Euler(idleRotationOffset);
-                        visualInstance.transform.localScale = Vector3.one;
+                        // Respetar el Transform original (permanente) del prefab
+                        idleRotationOffset = visualInstance.transform.localEulerAngles;
                     }
                 }
                 else

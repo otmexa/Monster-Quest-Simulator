@@ -16,13 +16,15 @@ public class TargetVisuals : MonoBehaviour
         GameObject circleObj = new GameObject("TargetCircle");
         circleObj.transform.SetParent(parent);
         
+        // Colocar el proyector alto para que pinte todo hacia abajo
         Vector3 pos = parent.position;
-        pos.y = 0.1f; // Project from very close to the ground
+        pos.y = 5f; 
         circleObj.transform.position = pos;
-        circleObj.transform.rotation = Quaternion.Euler(90, 0, 0); // Point downwards
+        circleObj.transform.rotation = Quaternion.Euler(90, 0, 0); // Apuntar hacia abajo
 
         DecalProjector dp = circleObj.AddComponent<DecalProjector>();
-        dp.size = new Vector3(size, size, 0.5f); // Shallow depth to not paint floating items
+        // Hacer la caja de proyección gigante (10 de profundidad) para garantizar que toque el piso
+        dp.size = new Vector3(size, size, 10f); 
         dp.material = decalMat;
         
         return circleObj;

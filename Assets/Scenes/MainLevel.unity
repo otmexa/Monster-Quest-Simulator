@@ -2814,19 +2814,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponInventoryUI
   leftHUDPanel: {fileID: 1138886304}
-  weaponsPopupPanel: {fileID: 1448838549}
-  weaponDetailsPanel: {fileID: 1598303759}
-  equippedCountText: {fileID: 37944799}
-  btnOpenWeapons: {fileID: 17304457}
-  goldText: {fileID: 0}
-  gridContainer: {fileID: 1993220722}
   weaponSlotPrefab: {fileID: 181806206}
-  capacityText: {fileID: 1249666332}
-  previewImage: {fileID: 2053592650}
+  gridContainer: {fileID: 1993220722}
+  placeholderSprite: {fileID: 0}
+  weaponDetailsPanel: {fileID: 1598303759}
   detailsNameText: {fileID: 1277332562}
   detailsStatsText: {fileID: 699511465}
+  capacityText: {fileID: 1249666332}
+  equippedCountText: {fileID: 37944799}
   btnEquip: {fileID: 733935138}
   btnEquipText: {fileID: 46342134}
+  goldText: {fileID: 0}
+  maxSlots: 15
+  previewImage: {fileID: 2053592650}
+  weaponsPopupPanel: {fileID: 1448838549}
+  btnOpenWeapons: {fileID: 17304457}
   btnSell: {fileID: 1596963727}
   playerCombat: {fileID: 0}
 --- !u!114 &588748024
@@ -2993,7 +2995,7 @@ MonoBehaviour:
     Address: 127.0.0.1
     Port: 7777
     WebSocketPath: /
-    ServerListenAddress: 
+    ServerListenAddress: 127.0.0.1
     ClientBindPort: 0
   DebugSimulator:
     PacketDelayMS: 0
@@ -4900,6 +4902,7 @@ MonoBehaviour:
   healthBarFill: {fileID: 854340858}
   damageNumberPrefab: {fileID: 6622365312003996634, guid: c1a631cec46afe844b9ad1c7dd9c2dbf, type: 3}
   isTargeted: 0
+  maxHealth: 1000
   healthText: {fileID: 270697460}
   respawnParticlesPrefab: {fileID: 3834592970531309167, guid: c06fff800c808314d8a2d881cb36ef1a, type: 3}
 --- !u!23 &1053569900
@@ -5548,6 +5551,7 @@ MonoBehaviour:
   healthBarFill: {fileID: 2053164186}
   damageNumberPrefab: {fileID: 6622365312003996634, guid: c1a631cec46afe844b9ad1c7dd9c2dbf, type: 3}
   isTargeted: 0
+  maxHealth: 5000
   healthText: {fileID: 530797420}
   respawnParticlesPrefab: {fileID: 3834592970531309167, guid: c06fff800c808314d8a2d881cb36ef1a, type: 3}
 --- !u!23 &1224361781
@@ -5639,7 +5643,7 @@ Transform:
   m_GameObject: {fileID: 1224361779}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 8}
+  m_LocalPosition: {x: -1.46, y: 1, z: 11.29}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -6878,6 +6882,7 @@ MonoBehaviour:
   healthBarFill: {fileID: 1057324997}
   damageNumberPrefab: {fileID: 6622365312003996634, guid: c1a631cec46afe844b9ad1c7dd9c2dbf, type: 3}
   isTargeted: 0
+  maxHealth: 100
   healthText: {fileID: 308326754}
   respawnParticlesPrefab: {fileID: 3834592970531309167, guid: c06fff800c808314d8a2d881cb36ef1a, type: 3}
 --- !u!23 &1610413365
